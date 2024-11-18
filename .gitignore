@@ -1,0 +1,5 @@
+.vscode
+.cmake_build
+build
+log
+install
