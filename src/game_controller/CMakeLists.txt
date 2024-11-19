@@ -13,7 +13,9 @@ find_package(rosidl_default_generators REQUIRED)
 
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/GameControl.msg"
+  "msg/GameControlData.msg"
+  "msg/RobotInfo.msg"
+  "msg/TeamInfo.msg"
 )
 
 add_executable(game_controller_node src/main.cpp src/game_controller_node.cpp)

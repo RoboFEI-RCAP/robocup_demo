@@ -6,7 +6,8 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "RoboCupGameControlData.h"
-#include "game_controller/msg/game_control.hpp"
+
+#include "game_controller/msg/game_control_data.hpp"
 
 using namespace std;
 
@@ -26,8 +27,8 @@ private:
     // 检查收到的包是否来自白名单机器
     bool check_ip_white_list(string ip);
 
-    // 处理数据包
-    bool handle_packet(RoboCupGameControlData &data, game_controller::msg::GameControl &msg);
+    // 处理数据包（逐字段复制）
+    void handle_packet(RoboCupGameControlData &data, game_controller::msg::GameControlData &msg);
 
     // 监听端口，从配置文件读
     int _port;
@@ -39,5 +40,5 @@ private:
     // UDP Socket
     int _socket;
     // Ros2 publisher
-    rclcpp::Publisher<game_controller::msg::GameControl>::SharedPtr _publisher;
+    rclcpp::Publisher<game_controller::msg::GameControlData>::SharedPtr _publisher;
 };

@@ -29,7 +29,7 @@ GameControllerNode::GameControllerNode(string name) : rclcpp::Node(name)
     }
 
     // 创建 publisher，发布到 /game_state
-    _publisher = create_publisher<game_controller::msg::GameControl>("/game_state", 10);
+    _publisher = create_publisher<game_controller::msg::GameControlData>("/robocup/game_controller", 10);
 }
 
 GameControllerNode::~GameControllerNode()
@@ -41,6 +41,9 @@ GameControllerNode::~GameControllerNode()
     }
 }
 
+/**
+ * 创建 Soket 并绑定到指定的端口
+ */
 void GameControllerNode::init()
 {
     // 创建 socket，失败了直接抛异常
@@ -75,9 +78,9 @@ void GameControllerNode::spin()
     sockaddr_in remote_addr;
     socklen_t remote_addr_len = sizeof(remote_addr);
 
-    // RoboCupGameControlData
+    // data 和 msg 在循环内是复用的，后续更新代码需要注意一下这个点
     RoboCupGameControlData data;
-    game_controller::msg::GameControl msg;
+    game_controller::msg::GameControlData msg;
 
     // 进入循环
     while (rclcpp::ok())
@@ -92,7 +95,6 @@ void GameControllerNode::spin()
 
         // 获取远端 IP
         string remote_ip = inet_ntoa(remote_addr.sin_addr);
-        RCLCPP_INFO(get_logger(), "received packet from %s length=%ld", remote_ip.c_str(), ret);
 
         // 接收到不完整的包或其它非法的包，忽略掉
         if (ret != sizeof(data))
@@ -101,26 +103,32 @@ void GameControllerNode::spin()
             continue;
         }
 
+        if (data.version != GAMECONTROLLER_STRUCT_VERSION)
+        {
+            RCLCPP_INFO(get_logger(), "packet from %s invalid version: %d", remote_ip.c_str(), data.version);
+            continue;
+        }
+
         // 过滤 IP 白名单
         if (!check_ip_white_list(remote_ip))
         {
-            RCLCPP_INFO(get_logger(), "%s not in ip_white_list, ignore packet from it", remote_ip.c_str());
+            RCLCPP_INFO(get_logger(), "received packet from %s, but not in ip white list, ignore it", remote_ip.c_str());
             continue;
         }
 
-        // 处理逻辑
-        if (!handle_packet(data, msg))
-        {
-            // 非法的包
-            RCLCPP_INFO(get_logger(), "packet from %s invalid", remote_ip.c_str());
-            continue;
-        }
+        // 处理消息，把 data 数据 copy 到 msg
+        handle_packet(data, msg);
 
         // 将消息发布到 Topic 中
         _publisher->publish(msg);
+
+        RCLCPP_INFO(get_logger(), "handle packet successfully ip=%s, packet_number=%d", remote_ip.c_str(), data.packetNumber);
     }
 }
 
+/**
+ * 检查 IP 是否在白名单里，如果未开启白名单或者在白名单里，返回 true，其它情况返回 false
+ */
 bool GameControllerNode::check_ip_white_list(string ip)
 {
     // 没有开启或在白名单内，返回 true
@@ -138,319 +146,74 @@ bool GameControllerNode::check_ip_white_list(string ip)
     return false;
 }
 
-bool GameControllerNode::handle_packet(RoboCupGameControlData &data, game_controller::msg::GameControl &msg)
+/**
+ * 将 UDP 数据格式转成自定交 Ros2 message 格式（逐字段复制）
+ * 如需更改，一定要仔细各字段
+ */
+void GameControllerNode::handle_packet(RoboCupGameControlData &data, game_controller::msg::GameControlData &msg)
 {
-    if (data.version != GAMECONTROLLER_STRUCT_VERSION)
+
+    // header 是固定长度 4
+    for (int i = 0; i < 4; i++)
     {
-        RCLCPP_INFO(get_logger(), "invalid packet version: %d", data.version);
-        return false;
+        msg.header[i] = data.header[i];
     }
-
-    // FAKE DATA:!!! 注意这里：playerOnCourt_A-D 在原来的代码里没有初始化，应该初始化成什么值？(0,1,2,3?)
-    int myTeamID = 29;
-    int playerOnCourt_A = 0;
-    int playerOnCourt_B = 1;
-    int playerOnCourt_C = 2;
-    int playerOnCourt_D = 3;
-    // FAKE DATA
-
-    TeamInfo myTeamInfo;
-    TeamInfo oppTeamInfo;
-
-    RobotInfo myRobot_A;
-    RobotInfo myRobot_B;
-    RobotInfo myRobot_C;
-    RobotInfo myRobot_D;
-
-    RobotInfo oppRobot_A;
-    RobotInfo oppRobot_B;
-    RobotInfo oppRobot_C;
-    RobotInfo oppRobot_D;
-
-    if (data.teams[0].teamNumber == myTeamID)
-    {
-        RCLCPP_INFO(get_logger(), "-----------------------0---------------------");
-        myTeamInfo = data.teams[0];
-        oppTeamInfo = data.teams[1];
-    }
-    else if (data.teams[1].teamNumber == myTeamID)
-    {
-        RCLCPP_INFO(get_logger(), "-----------------------1---------------------");
-        myTeamInfo = data.teams[1];
-        oppTeamInfo = data.teams[0];
-    }
-    myRobot_A = myTeamInfo.players[playerOnCourt_A];
-    myRobot_B = myTeamInfo.players[playerOnCourt_B];
-    myRobot_C = myTeamInfo.players[playerOnCourt_C];
-    myRobot_D = myTeamInfo.players[playerOnCourt_D];
-
-    oppRobot_A = oppTeamInfo.players[playerOnCourt_A];
-    oppRobot_B = oppTeamInfo.players[playerOnCourt_B];
-    oppRobot_C = oppTeamInfo.players[playerOnCourt_C];
-    oppRobot_D = oppTeamInfo.players[playerOnCourt_D];
-
-    // valid packet!
-    // data
+    msg.version = data.version;
+    msg.packet_number = data.packetNumber;
+    msg.players_per_team = data.playersPerTeam;
     msg.game_type = data.gameType;
     msg.state = data.state;
     msg.first_half = data.firstHalf;
     msg.kick_off_team = data.kickOffTeam;
     msg.secondary_state = data.secondaryState;
-    msg.secondary_state_team = data.secondaryStateInfo[0]; // Extra Secondary State Info: Freekick and Penaltykick etc.
-    msg.secondary_state_info = data.secondaryStateInfo[1];
+    // secondary_state_info 是固定长度 4
+    for (int i = 0; i < 4; i++)
+    {
+        msg.secondary_state_info[i] = data.secondaryStateInfo[i];
+    }
     msg.drop_in_team = data.dropInTeam;
     msg.drop_in_time = data.dropInTime;
     msg.secs_remaining = data.secsRemaining;
     msg.secondary_time = data.secondaryTime;
-
-    // TeamInfo
-    msg.score = myTeamInfo.score;
-    msg.penalty_shot = myTeamInfo.penaltyShot;
-    msg.single_shots = myTeamInfo.singleShots;
-
-    // oppTeamInfo
-    msg.opp_score = oppTeamInfo.score;
-    msg.opp_penalty_shot = oppTeamInfo.penaltyShot;
-    msg.opp_single_shots = oppTeamInfo.singleShots;
-
-    // RobotInfo
-    msg.a_penalty = myRobot_A.penalty;
-    msg.a_secs_till_unpenalised = myRobot_A.secsTillUnpenalised;
-    msg.a_yellow_card_count = myRobot_A.yellowCardCount;
-    msg.a_red_card_count = myRobot_A.redCardCount;
-
-    msg.b_penalty = myRobot_B.penalty;
-    msg.b_secs_till_unpenalised = myRobot_B.secsTillUnpenalised;
-    msg.b_yellow_card_count = myRobot_B.yellowCardCount;
-    msg.b_red_card_count = myRobot_B.redCardCount;
-
-    msg.c_penalty = myRobot_C.penalty;
-    msg.c_secs_till_unpenalised = myRobot_C.secsTillUnpenalised;
-    msg.c_yellow_card_count = myRobot_C.yellowCardCount;
-    msg.c_red_card_count = myRobot_C.redCardCount;
-
-    msg.d_penalty = myRobot_D.penalty;
-    msg.d_secs_till_unpenalised = myRobot_D.secsTillUnpenalised;
-    msg.d_yellow_card_count = myRobot_D.yellowCardCount;
-    msg.d_red_card_count = myRobot_D.redCardCount;
-
-    msg.opp_a_penalty = oppRobot_A.penalty;
-    msg.opp_b_penalty = oppRobot_B.penalty;
-    msg.opp_c_penalty = oppRobot_C.penalty;
-    msg.opp_d_penalty = oppRobot_D.penalty;
-
-    if (msg.kick_off_team == myTeamID)
+    // teams 是固定长度 2
+    for (int i = 0; i < 2; i++)
     {
-        msg.is_kick_off = true;
-    }
-    else
-    {
-        msg.is_kick_off = false;
-    }
+        msg.teams[i].team_number = data.teams[i].teamNumber;
+        msg.teams[i].team_colour = data.teams[i].teamColour;
+        msg.teams[i].score = data.teams[i].score;
+        msg.teams[i].penalty_shot = data.teams[i].penaltyShot;
+        msg.teams[i].single_shots = data.teams[i].singleShots;
+        msg.teams[i].coach_sequence = data.teams[i].coachSequence;
 
-    switch (msg.game_type)
-    {
-    case GAME_ROUNDROBIN:
-        RCLCPP_INFO(get_logger(), "Game Type: Roundrobin");
-        break;
-    case GAME_PLAYOFF:
-        RCLCPP_INFO(get_logger(), "Game Type: Playoff");
-        break;
-    case GAME_DROPIN:
-        RCLCPP_INFO(get_logger(), "Game Type: Drop");
-        break;
-    default:
-        RCLCPP_INFO(get_logger(), "Game Type: Unknown");
-        break;
-    }
-    switch (msg.state)
-    {
-    case STATE_INITIAL:
-        msg.is_ready = false;
-        msg.is_set = false;
-        msg.is_start = false;
-        msg.is_end = false;
-        RCLCPP_INFO(get_logger(), "Game State: Initial");
-        break;
-    case STATE_READY:
-        msg.is_ready = true;
-        msg.is_set = false;
-        msg.is_start = false;
-        msg.is_end = false;
-        RCLCPP_INFO(get_logger(), "Game State: Ready");
-        break;
-    case STATE_SET:
-        msg.is_ready = false;
-        msg.is_set = true;
-        msg.is_start = false;
-        msg.is_end = false;
-        RCLCPP_INFO(get_logger(), "Game State: Set");
-        break;
-    case STATE_PLAYING:
-        msg.is_ready = false;
-        msg.is_set = false;
-        msg.is_start = true;
-        msg.is_end = false;
-        RCLCPP_INFO(get_logger(), "Game State: Playing");
-        break;
-    case STATE_FINISHED:
-        msg.is_ready = false;
-        msg.is_set = false;
-        msg.is_start = false;
-        msg.is_end = true;
-        RCLCPP_INFO(get_logger(), "Game State: Finished");
-        break;
-    default:
-        msg.is_ready = false;
-        msg.is_set = false;
-        msg.is_start = false;
-        msg.is_end = false;
-        RCLCPP_INFO(get_logger(), "Game State: Unknown");
-        break;
-    }
-    switch (msg.first_half)
-    {
-    case 1:
-        RCLCPP_INFO(get_logger(), "First half");
-        break;
-    default:
-        RCLCPP_INFO(get_logger(), "Second half");
-        break;
-    }
-    RCLCPP_INFO(get_logger(), "Kick Off Team: %d", msg.kick_off_team);
-    switch (msg.secondary_state)
-    {
-    case STATE2_NORMAL:
-        RCLCPP_INFO(get_logger(), "Secondary State: Normal");
-        break;
-    case STATE2_PENALTYSHOOT: // 空门
-        RCLCPP_INFO(get_logger(), "Secondary State: Penalty Shoot");
-        RCLCPP_INFO(get_logger(), "Penalty Shoot Team: %d", msg.secondary_state_team);
-        if (msg.secondary_state_info == 0)
-            RCLCPP_INFO(get_logger(), "Ball is being positioned.");
-        else if (msg.secondary_state_info == 1)
-            RCLCPP_INFO(get_logger(), "Prepared.");
-        break;
-    case STATE2_OVERTIME:
-        RCLCPP_INFO(get_logger(), "Secondary State: Overtime");
-        break;
-    case STATE2_TIMEOUT:
-        RCLCPP_INFO(get_logger(), "Secondary State: Time Out");
-        break;
-    case STATE2_DIRECT_FREEKICK: // 直接任意球
-        RCLCPP_INFO(get_logger(), "Secondary State: Direct Freekick");
-        RCLCPP_INFO(get_logger(), "Direct Freekick Team: %d", msg.secondary_state_team);
-        if (msg.secondary_state_info == 0)
-            RCLCPP_INFO(get_logger(), "Prepare");
-        else if (msg.secondary_state_info == 1)
-            RCLCPP_INFO(get_logger(), "Freeze");
-        break;
-    case STATE2_INDIRECT_FREEKICK: // 间接任意球
-        RCLCPP_INFO(get_logger(), "Secondary State: Indirect Freekick");
-        RCLCPP_INFO(get_logger(), "Indirect Freekick Team: %d", msg.secondary_state_team);
-        if (msg.secondary_state_info == 0)
-            RCLCPP_INFO(get_logger(), "Prepare");
-        else if (msg.secondary_state_info == 1)
-            RCLCPP_INFO(get_logger(), "Freeze");
-        break;
-    case STATE2_PENALTYKICK: // 点球
-        RCLCPP_INFO(get_logger(), "Secondary State: Penalty Kick");
-        RCLCPP_INFO(get_logger(), "Penalty Kick Team: %d", msg.secondary_state_team);
-        if (msg.secondary_state_info == 0)
-            RCLCPP_INFO(get_logger(), "Ball is being positioned.");
-        else if (msg.secondary_state_info == 1)
-            RCLCPP_INFO(get_logger(), "Prepared.");
-        break;
-    default:
-        RCLCPP_INFO(get_logger(), "Secondary State: Unknown");
-        break;
-    }
-    RCLCPP_INFO(get_logger(), "Drop In Team: %d", msg.drop_in_team);
-    RCLCPP_INFO(get_logger(), "Drop In Time: %d s", msg.drop_in_time);
-    RCLCPP_INFO(get_logger(), "Remaining Time: %d s", msg.secs_remaining);
-    RCLCPP_INFO(get_logger(), "Secondary Time: %d s", msg.secondary_time);
+        // msg.teams[i].players 定义为不定长的数组，注意跟定长数组有所区分
+        int coach_message_len = sizeof(data.teams[i].coachMessage) / sizeof(data.teams[i].coachMessage[0]);
+        msg.teams[i].coach_message.clear(); // 因为 msg 是利用的，切记这里要 clear()
+        for (int j = 0; j < coach_message_len; j++)
+        {
+            msg.teams[i].coach_message.push_back(data.teams[i].coachMessage[j]);
+        }
 
-    RCLCPP_INFO(get_logger(), "Score: THU %d : %d XXX ", msg.score, msg.opp_score);
-    RCLCPP_INFO(get_logger(), "Penalty Shot: THU %d : %d XXX ", msg.penalty_shot, msg.opp_penalty_shot);
-    RCLCPP_INFO(get_logger(), "Single Shots: THU %d : %d XXX\n", msg.single_shots, msg.opp_single_shots);
+        // msg.teams[i].cocah
+        msg.teams[i].coach.penalty = data.teams[i].coach.penalty;
+        msg.teams[i].coach.secs_till_unpenalised = data.teams[i].coach.secsTillUnpenalised;
+        msg.teams[i].coach.number_of_warnings = data.teams[i].coach.numberOfWarnings;
+        msg.teams[i].coach.yellow_card_count = data.teams[i].coach.yellowCardCount;
+        msg.teams[i].coach.red_card_count = data.teams[i].coach.redCardCount;
+        msg.teams[i].coach.goal_keeper = data.teams[i].coach.goalKeeper;
 
-    switch (msg.a_penalty)
-    {
-    case HL_BALL_MANIPULATION:
-        RCLCPP_INFO(get_logger(), "A_Penalty: Ball Manipulation");
-        break;
-    case HL_PHYSICAL_CONTACT:
-        RCLCPP_INFO(get_logger(), "A_Penalty: Pushing");
-        break;
-    case HL_ILLEGAL_ATTACK:
-        RCLCPP_INFO(get_logger(), "A_Penalty: Illegal Attack");
-        break;
-    case HL_ILLEGAL_DEFENSE:
-        RCLCPP_INFO(get_logger(), "A_Penalty: Illegal Defense");
-        break;
-    case HL_PICKUP_OR_INCAPABLE:
-        RCLCPP_INFO(get_logger(), "A_Penalty: Pickup or Incapable");
-        break;
-    case HL_SERVICE:
-        RCLCPP_INFO(get_logger(), "A_Penalty: Service");
-        break;
-    case PENALTY_NONE:
-        RCLCPP_INFO(get_logger(), "A_Penalty: None");
-        break;
-    case SUBSTITUTE: // Substitute: Substitute Player
-        RCLCPP_INFO(get_logger(), "A_Penalty: Substitute");
-        break;
-    case MANUAL: // Manual: Coach
-        RCLCPP_INFO(get_logger(), "A_Penalty: Manual");
-        break;
-    default:
-        RCLCPP_INFO(get_logger(), "A_Penalty: Unknown");
-        break;
+        // msg.teams[i].coach_message 定义为不定长的数组，注意跟定长数组有所区分
+        int players_len = sizeof(data.teams[i].players) / sizeof(data.teams[i].players[0]);
+        msg.teams[i].players.clear(); // 因为 msg 是利用的，切记这里要 clear()
+        for (int j = 0; j < players_len; j++)
+        {
+            game_controller::msg::RobotInfo rf;
+            rf.penalty = data.teams[i].players[j].penalty;
+            rf.secs_till_unpenalised = data.teams[i].players[j].secsTillUnpenalised;
+            rf.number_of_warnings = data.teams[i].players[j].numberOfWarnings;
+            rf.yellow_card_count = data.teams[i].players[j].yellowCardCount;
+            rf.red_card_count = data.teams[i].players[j].redCardCount;
+            rf.goal_keeper = data.teams[i].players[j].goalKeeper;
+            msg.teams[i].players.push_back(rf);
+        }
     }
-
-    RCLCPP_INFO(get_logger(), "A_Penalty: %d", msg.a_penalty);
-    RCLCPP_INFO(get_logger(), "A_Time Until Unpenalized: %d s", msg.a_secs_till_unpenalised);
-    RCLCPP_INFO(get_logger(), "A_Yellow Card: %d", msg.a_yellow_card_count);
-    RCLCPP_INFO(get_logger(), "A_Red Card: %d\n", msg.a_red_card_count);
-
-    switch (msg.b_penalty)
-    {
-    case HL_BALL_MANIPULATION:
-        RCLCPP_INFO(get_logger(), "B_Penalty: Ball Manipulation");
-        break;
-    case HL_PHYSICAL_CONTACT:
-        RCLCPP_INFO(get_logger(), "B_Penalty: Pushing");
-        break;
-    case HL_ILLEGAL_ATTACK:
-        RCLCPP_INFO(get_logger(), "B_Penalty: Illegal Attack");
-        break;
-    case HL_ILLEGAL_DEFENSE:
-        RCLCPP_INFO(get_logger(), "B_Penalty: Illegal Defense");
-        break;
-    case HL_PICKUP_OR_INCAPABLE:
-        RCLCPP_INFO(get_logger(), "B_Penalty: Pickup or Incapable");
-        break;
-    case HL_SERVICE:
-        RCLCPP_INFO(get_logger(), "B_Penalty: Service");
-        break;
-    case PENALTY_NONE:
-        RCLCPP_INFO(get_logger(), "B_Penalty: None");
-        break;
-    case SUBSTITUTE: // Substitute: Substitute Player
-        RCLCPP_INFO(get_logger(), "B_Penalty: Substitute");
-        break;
-    case MANUAL: // Manual: Coach
-        RCLCPP_INFO(get_logger(), "B_Penalty: Manual");
-        break;
-    default:
-        RCLCPP_INFO(get_logger(), "B_Penalty: Unknown");
-        break;
-    }
-    RCLCPP_INFO(get_logger(), "B_Penalty: %d", msg.b_penalty);
-    RCLCPP_INFO(get_logger(), "B_Time Until Unpenalized: %d s", msg.b_secs_till_unpenalised);
-    RCLCPP_INFO(get_logger(), "B_Yellow Card: %d", msg.b_yellow_card_count);
-    RCLCPP_INFO(get_logger(), "B_Red Card: %d", msg.b_red_card_count);
-    RCLCPP_INFO(get_logger(), "****************************************\n");
-
-    return true;
 }
