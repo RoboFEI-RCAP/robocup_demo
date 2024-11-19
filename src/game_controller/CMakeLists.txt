@@ -9,21 +9,11 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-
-
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/GameControlData.msg"
-  "msg/RobotInfo.msg"
-  "msg/TeamInfo.msg"
-)
+find_package(game_controller_interface REQUIRED)
 
 add_executable(game_controller_node src/main.cpp src/game_controller_node.cpp)
 
-rosidl_get_typesupport_target(typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
-target_link_libraries(game_controller_node ${typesupport_target})
-
-ament_target_dependencies(game_controller_node rclcpp)
+ament_target_dependencies(game_controller_node game_controller_interface rclcpp)
 
 target_include_directories(game_controller_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -34,7 +24,5 @@ install(DIRECTORY launch
 install(TARGETS
   game_controller_node
   DESTINATION lib/${PROJECT_NAME})
-
-ament_export_dependencies(rosidl_default_runtime)
 
 ament_package()

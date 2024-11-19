@@ -29,7 +29,7 @@ GameControllerNode::GameControllerNode(string name) : rclcpp::Node(name)
     }
 
     // 创建 publisher，发布到 /game_state
-    _publisher = create_publisher<game_controller::msg::GameControlData>("/robocup/game_controller", 10);
+    _publisher = create_publisher<game_controller_interface::msg::GameControlData>("/robocup/game_controller", 10);
 }
 
 GameControllerNode::~GameControllerNode()
@@ -80,7 +80,7 @@ void GameControllerNode::spin()
 
     // data 和 msg 在循环内是复用的，后续更新代码需要注意一下这个点
     RoboCupGameControlData data;
-    game_controller::msg::GameControlData msg;
+    game_controller_interface::msg::GameControlData msg;
 
     // 进入循环
     while (rclcpp::ok())
@@ -150,7 +150,7 @@ bool GameControllerNode::check_ip_white_list(string ip)
  * 将 UDP 数据格式转成自定交 Ros2 message 格式（逐字段复制）
  * 如需更改，一定要仔细各字段
  */
-void GameControllerNode::handle_packet(RoboCupGameControlData &data, game_controller::msg::GameControlData &msg)
+void GameControllerNode::handle_packet(RoboCupGameControlData &data, game_controller_interface::msg::GameControlData &msg)
 {
 
     // header 是固定长度 4
@@ -206,7 +206,7 @@ void GameControllerNode::handle_packet(RoboCupGameControlData &data, game_contro
         msg.teams[i].players.clear(); // 因为 msg 是利用的，切记这里要 clear()
         for (int j = 0; j < players_len; j++)
         {
-            game_controller::msg::RobotInfo rf;
+            game_controller_interface::msg::RobotInfo rf;
             rf.penalty = data.teams[i].players[j].penalty;
             rf.secs_till_unpenalised = data.teams[i].players[j].secsTillUnpenalised;
             rf.number_of_warnings = data.teams[i].players[j].numberOfWarnings;
