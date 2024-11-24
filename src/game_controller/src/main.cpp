@@ -11,7 +11,8 @@ int main(int argc, char *argv[]) {
 
     // 初始化后，进入 spin
     node->init();
-    node->spin();
+    
+    rclcpp::spin(node);
 
     rclcpp::shutdown();
 

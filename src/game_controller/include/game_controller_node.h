@@ -39,6 +39,10 @@ private:
 
     // UDP Socket
     int _socket;
+    // thread
+    
+    thread _thread;
+
     // Ros2 publisher
     rclcpp::Publisher<game_controller_interface::msg::GameControlData>::SharedPtr _publisher;
 };

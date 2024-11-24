@@ -39,6 +39,11 @@ GameControllerNode::~GameControllerNode()
         // 关闭打开的文件描述符是个好习惯
         close(_socket);
     }
+
+    if (_thread.joinable())
+    {
+        _thread.join();
+    }
 }
 
 /**
@@ -70,6 +75,9 @@ void GameControllerNode::init()
 
     // bind 成功后就可以开始从 socket 里接收数据了
     RCLCPP_INFO(get_logger(), "Listening for UDP broadcast on 0.0.0.0:%d", _port);
+
+    // 启用一个新的线程来接收数据，主线程进入 Node 自身的 spin，处理一些 Node 自己的服务
+    _thread = thread(&GameControllerNode::spin, this);
 }
 
 void GameControllerNode::spin()
