@@ -10,8 +10,8 @@ from launch.substitutions import LaunchConfiguration
 
 def handle_configuration(context, *args, **kwargs):
     config_path = os.path.join(os.path.dirname(__file__), '../config')
-    config_file = os.path.join(config_path, 'config.yaml') 
-    config_local_file = os.path.join(config_path, 'config_local.yaml') 
+    config_file = os.path.join(config_path, 'brain.yaml') 
+    config_local_file = os.path.join(config_path, 'brain_local.yaml') 
 
     behavior_trees_dir = os.path.join(os.path.dirname(__file__), '../behavior_trees')
     def make_tree_path(name):

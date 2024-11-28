@@ -576,12 +576,6 @@ vector<GameObject> Brain::getGameObjects(const vision_interface::msg::Detections
         gObj.timePoint = timePoint;
         gObj.label = obj.label;
 
-        if (obj.target_uv.size() == 2)
-        { // 地面标志点的精确像素位置信息
-            gObj.precisePixelPoint.x = static_cast<double>(obj.target_uv[0]);
-            gObj.precisePixelPoint.y = static_cast<double>(obj.target_uv[1]);
-        }
-
         gObj.boundingBox.xmax = obj.xmax;
         gObj.boundingBox.xmin = obj.xmin;
         gObj.boundingBox.ymax = obj.ymax;

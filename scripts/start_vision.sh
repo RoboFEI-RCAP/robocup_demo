@@ -6,4 +6,4 @@ cd ..
 source ./install/setup.bash
 export FASTRTPS_DEFAULT_PROFILES_FILE=./configs/fastdds.xml
 
-ros2 run vision vision_node ./src/vision/config/vision.yaml 
+ros2 launch vision launch.py
