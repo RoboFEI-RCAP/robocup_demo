@@ -1,4 +1,0 @@
-src/vision/model/best_ada.engine filter=lfs diff=lfs merge=lfs -text
-src/vision/model/best_orin.engine filter=lfs diff=lfs merge=lfs -text
-src/vision/model/best_seg_orin.engine filter=lfs diff=lfs merge=lfs -text
-src/vision/model/best_turing.engine filter=lfs diff=lfs merge=lfs -text
