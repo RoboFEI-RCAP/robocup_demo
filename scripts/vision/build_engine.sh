@@ -27,7 +27,6 @@ echo 'start wts converting'
 # convert pt file to wts script
 python3 model/gen_wts.py -w $pt_file -o $exported_model_path/model.wts -t detect
 echo 'finish wts converting'
-cd -
 
 # convert wts to engine
 source ../../install/setup.bash

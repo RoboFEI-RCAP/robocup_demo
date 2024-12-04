@@ -4,7 +4,6 @@
 #include <random>
 #include <sstream>
 
-#include <booster/robot/common/robot_mode.hpp>
 #include <booster/robot/b1/b1_api_const.hpp>
 #include <booster/robot/b1/b1_loco_api.hpp>
 
@@ -27,11 +26,11 @@ namespace booster_msgs
         ss << "-";
         for (int i = 0; i < 4; i++)
             ss << uni(rng);
-        ss << "-4"; // 第13位是4，表明这是一个版本4的UUID
+        ss << "-4";
         for (int i = 0; i < 3; i++)
             ss << uni(rng);
         ss << "-";
-        ss << uni8(rng); // 第17位是8、9、A或B
+        ss << uni8(rng);
         for (int i = 0; i < 3; i++)
             ss << uni(rng);
         ss << "-";
