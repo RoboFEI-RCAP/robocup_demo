@@ -1,5 +1,6 @@
 #include "brain_config.h"
 #include "utils/print.h"
+#include "joy_msg.h"
 
 void BrainConfig::handle()
 {
@@ -34,6 +35,20 @@ void BrainConfig::handle()
     {
         throw invalid_argument("[Error] fieldType must be one of [adult_size, kid_size]. Got: " + fieldType);
     }
+
+    // joystick
+    if (joystick == "logitech")
+    {
+        JoyMsg::type = JoyMsg::LOGITECH;
+    }
+    else if (joystick == "beitong")
+    {
+        JoyMsg::type = JoyMsg::BEITONG;
+    }
+    else
+    {
+        throw invalid_argument("[Error] joystick must be one of [logitech, beitong]. Got: " + joystick);
+    }
 }
 
 void BrainConfig::print(ostream &os)
@@ -44,11 +59,13 @@ void BrainConfig::print(ostream &os)
     os << "playerId = " << playerId << endl;
     os << "fieldType = " << fieldType << endl;
     os << "playerRole = " << playerRole << endl;
+    os << "playerStartPos = " << playerStartPos << endl;
     os << "----------------------------------------" << endl;
     os << "robotHeight = " << robotHeight << endl;
     os << "robotOdomFactor = " << robotOdomFactor << endl;
     os << "vxFactor = " << vxFactor << endl;
     os << "yawOffset = " << yawOffset << endl;
+    os << "joystick = " << joystick << endl;
     os << "----------------------------------------" << endl;
     os << "rerunLogEnable = " << rerunLogEnable << endl;
     os << "rerunLogServerAddr = " << rerunLogServerAddr << endl;
