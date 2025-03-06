@@ -6,3 +6,4 @@ install
 *.log
 brain_local.yaml
 vision_local.yaml
+distribution/packages
