@@ -164,6 +164,33 @@ void Brain::updateBallMemory()
                  .with_colors({tree->getEntry<bool>("ball_location_known") ? 0xFFFFFFFF : 0xFF0000FF})
                  .with_radii({0.005})
                  .with_draw_order(30));
+
+
+    string ballId = "field/ball_";
+    if (config->playerRole == "goal_keeper")
+    {
+        for(int i = 0; i < data->fieldData.allyBallData.size(); i++)
+        {
+            if (data->fieldData.allyBallData.at(i).detected)
+            {
+                Pose2D pos = data->fieldData.allyBallData.at(i).fieldPos;
+                log->log(
+                    ballId +
+                        to_string(data->fieldData.allyBallData.at(i).playerId),
+                    rerun::LineStrips2D({
+                                            rerun::Collection<rerun::Vec2D>{
+                                                {pos.x - 0.2, -pos.y},
+                                                {pos.x + 0.2, -pos.y}},
+                                            rerun::Collection<rerun::Vec2D>{
+                                                {pos.x, -pos.y - 0.2},
+                                                {pos.x, -pos.y + 0.2}},
+                                        })
+                        .with_colors({0x00FFFFFF})
+                        .with_radii({0.05})
+                        .with_draw_order(50));
+            }
+        }
+    }
 }
 
 vector<double> Brain::getGoalPostAngles(const double margin)
@@ -463,10 +490,31 @@ void Brain::odometerCallback(const booster_interface::msg::Odometer &msg)
         data->robotPoseToField.x, data->robotPoseToField.y, data->robotPoseToField.theta);
 
     log->setTimeNow();
+    rerun::Color robotColor(0xFF6666FF);
+
+    if (config->playerId != 0)
+    {
+        robotColor = rerun::Color(0x50FA7BFF);
+    }
+
     log->log("field/robot",
              rerun::Points2D({{data->robotPoseToField.x, -data->robotPoseToField.y}, {data->robotPoseToField.x + 0.1 * cos(data->robotPoseToField.theta), -data->robotPoseToField.y - 0.1 * sin(data->robotPoseToField.theta)}})
                  .with_radii({0.2, 0.1})
-                 .with_colors({0xFF6666FF, 0xFF0000FF}));
+                 .with_colors({robotColor, 0xFF0000FF}));
+
+    string robotName = "field/robot_";
+    if (config->playerRole == "goal_keeper")
+    {
+        for(int i = 0; i < data->fieldData.allyData.size(); i++)
+        {
+          log->log(
+              robotName + to_string(data->fieldData.allyData.at(i).playerId),
+              rerun::Points2D({ {data->fieldData.allyData.at(i).pos.x,
+                                -data->fieldData.allyData.at(i).pos.y} })
+                  .with_radii({0.3})
+                  .with_colors({robotColor}));
+        }
+    }
 }
 
 void Brain::lowStateCallback(const booster_interface::msg::LowState &msg)

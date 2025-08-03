@@ -332,8 +332,14 @@ void BrainCommunication::unicastCommunication() {
         msg.communicationId = _team_communication_msg_id++;
         msg.teamId = brain->config->teamId;
         msg.playerId = brain->config->playerId;
-        // TODO: add something you want to send to teammates, this is only an example
-        msg.testInfo = 1234567; 
+
+        msg.selfPos = brain->data->robotPoseToField;
+
+        msg.ballInfo.playerId = brain->config->playerId;
+        msg.ballInfo.detected = brain->data->ballDetected;
+        msg.ballInfo.fieldPos.x = brain->data->ball.posToField.x;
+        msg.ballInfo.fieldPos.y = brain->data->ball.posToField.y;
+        msg.ballInfo.range = brain->data->ball.range;
 
         std::lock_guard<std::mutex> lock(_teammate_addresses_mutex);
         for (auto it = _teammate_addresses.begin(); it != _teammate_addresses.end(); ++it) {
@@ -421,15 +427,17 @@ void BrainCommunication::spinCommunicationReceiver() {
         }
 
         if (msg.playerId == brain->config->playerId) {  // ignore self messages
+
             cout << CYAN_CODE <<  format(
-                "communicationId: %d, playerId: %d, testInfo: %d",
-                msg.communicationId, msg.playerId, msg.testInfo)
+                "communicationId: %d, playerId: %d, selfPos(x,y): (%.3f, %.3f)",
+                msg.communicationId, msg.playerId, msg.selfPos.x, msg.selfPos.y)
                 << RESET_CODE << endl;
+
             continue;
         } 
 
-
         // TODO: dealing with the received message
+        brain->data->fieldData.updateFromMsg(msg);
     }
 }
 

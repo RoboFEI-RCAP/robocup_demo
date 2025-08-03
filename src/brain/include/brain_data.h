@@ -4,6 +4,7 @@
 #include <mutex>
 
 #include "locator.h"
+#include "field_data.h"
 
 using namespace std;
 
@@ -53,6 +54,9 @@ public:
     double dribbleTargetAngle;    // The direction for dribbling
     bool dribbleTargetAngleFound; // Whether the dribbling direction planning was successful
     double moveTargetAngle;       // Target direction for movement
+
+    // Field data to support strategy during game
+    FieldData fieldData;
 
     // A collection of utility functions
     vector<FieldMarker> getMarkers();
