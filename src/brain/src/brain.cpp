@@ -51,6 +51,11 @@ void Brain::init()
 
     tree->init();
 
+    // Start position
+
+    tree->setEntry<float>("goal_start_x", -(config->fieldDimensions.length / 2) + config->fieldDimensions.penaltyAreaLength/2);
+    tree->setEntry<float>("striker_start_x", -(config->fieldDimensions.circleRadius + 0.3));
+
     client->init();
 
     log->prepare();
@@ -370,7 +375,7 @@ void Brain::detectionsCallback(const vision_interface::msg::Detections &msg)
         if (obj.label == "Person")
         {
             persons.push_back(obj);
-
+            
             if (tree->getEntry<bool>("treat_person_as_robot"))
                 robots.push_back(obj);
         }
