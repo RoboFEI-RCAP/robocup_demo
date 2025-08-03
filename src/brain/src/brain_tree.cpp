@@ -81,6 +81,9 @@ void BrainTree::initEntry()
 
     setEntry<bool>("we_just_scored", false);
     setEntry<bool>("wait_for_opponent_kickoff", false);
+
+    setEntry<double>("goal_start_x", -(brain->config->fieldDimensions.length / 2) + brain->config->fieldDimensions.penaltyAreaLength / 2);
+    setEntry<double>("striker_start_x", -(brain->config->fieldDimensions.circleRadius + 0.3));
 }
 
 void BrainTree::tick()
