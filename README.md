@@ -1,4 +1,4 @@
-# Robocup Demo
+# RoboFEI - Robocup Demo
 ## Introduction
 The Booster T1 Robocup official demo allows the robot to make autonomous decisions to kick the ball and complete the full Robocup match. It includes three programs: vision, brain, and game_controller.
 
