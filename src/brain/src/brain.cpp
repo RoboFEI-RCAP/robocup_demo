@@ -408,6 +408,7 @@ void Brain::detectionsCallback(const vision_interface::msg::Detections &msg)
     }
 
     detectProcessBalls(balls);
+    detectProcessRobots(robots);
     detectProcessMarkings(markings);
 
     if (!log->isEnabled())
@@ -748,5 +749,25 @@ void Brain::detectProcessMarkings(const vector<GameObject> &markingObjs)
             continue;
 
         data->markings.push_back(marking);
+    }
+}
+
+void Brain::detectProcessRobots(const vector<GameObject> &robotObjs)
+{
+    const double confidenceValve = 0.1;
+
+    data->opponents.clear();
+
+    for (int i = 0; i < robotObjs.size(); i++)
+    {
+        auto robot = robotObjs[i];
+
+        if (robot.confidence < confidenceValve)
+            continue;
+
+        if (robot.posToRobot.x > 10.0)
+            continue;
+
+        data->opponents.push_back(robot);
     }
 }
