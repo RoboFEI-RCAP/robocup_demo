@@ -765,9 +765,13 @@ void Brain::detectProcessRobots(const vector<GameObject> &robotObjs)
         if (robot.confidence < confidenceValve)
             continue;
 
-        if (robot.posToRobot.x > 10.0)
-            continue;
-
         data->opponents.push_back(robot);
+
+        rerun::Color opponentColor(0xFF0000FF);
+        log->log(
+            robotName + to_string(i),
+            rerun::Points2D({{robot.posToField.x, -robot.posToField.y}})
+                .with_radii({0.3})
+                .with_colors({opponentColor}));
     }
 }
