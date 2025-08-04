@@ -373,7 +373,7 @@ NodeStatus AdjustToFieldPoint::tick()
     getInput("position", position);
 
     double vx = 0, vy = 0, vtheta = 0;
-    double kickDir = atan2(target_y - data->ball.posToField.y, target_x - data->ball.posToField.x);
+    double kickDir = atan2(target_y - brain->data->ball.posToField.y, target_x - brain->data->ball.posToField.x);
     double dir_rb_f = brain->data->robotBallAngleToField;
     double deltaDir = toPInPI(kickDir - dir_rb_f);
     double dir = deltaDir > 0 ? -1.0 : 1.0;
