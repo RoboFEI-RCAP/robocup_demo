@@ -313,6 +313,10 @@ NodeStatus SimpleChase::tick()
 
 NodeStatus Positioning::tick()
 {
+    double tx, ty, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance;
+
+    float offsetGoalie = 0.3;
+
     if (brain->data->ballBuffer.size() != 10){
         return NodeStatus::FAILURE;
     }
@@ -326,6 +330,49 @@ NodeStatus Positioning::tick()
 
     avgBallPos.x /= brain->data->ballBuffer.size();
     avgBallPos.y /= brain->data->ballBuffer.size();
+
+    bool interception;
+
+    if(interception)
+    {
+
+    }
+    else
+    {
+        if((brain->data->ball.posToField.x < -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.penaltyAreaLength)) && 
+                brain->data->ball.posToField.y < -(brain->config->fieldDimensions.penaltyAreaWidth / 2))
+        {
+            tx = -brain->config->fieldDimensions.length / 2 - offsetGoalie;
+            ty = -brain->config->fieldDimensions.goalWidth / 2 - offsetGoalie;
+        }
+        else if((brain->data->ball.posToField.x < -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.penaltyAreaLength)) && 
+                    brain->data->ball.posToField.y > (brain->config->fieldDimensions.penaltyAreaWidth / 2))
+        {
+            tx = -brain->config->fieldDimensions.length / 2 - offsetGoalie;
+            ty = brain->config->fieldDimensions.goalWidth / 2 + offsetGoalie;
+        }
+        else if((brain->data->ball.posToField.x > -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.penaltyAreaLength)) && 
+                    brain->data->ball.posToField.y < -(brain->config->fieldDimensions.goalAreaWidth / 4 + brain->config->fieldDimensions.penaltyAreaWidth / 4))
+        {
+            tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
+            ty = -brain->config->fieldDimensions.goalWidth / 4;
+        }
+        else if((brain->data->ball.posToField.x > -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.penaltyAreaLength)) && 
+                    brain->data->ball.posToField.y > (brain->config->fieldDimensions.goalAreaWidth / 4 + brain->config->fieldDimensions.penaltyAreaWidth / 4))
+        {
+            tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
+            ty = brain->config->fieldDimensions.goalWidth / 4;
+        }
+        else if((brain->data->ball.posToField.x > -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.penaltyAreaLength)) && 
+                    brain->data->ball.posToField.y < (brain->config->fieldDimensions.goalAreaWidth / 4 + brain->config->fieldDimensions.penaltyAreaWidth / 4) && 
+                    brain->data->ball.posToField.y > -(brain->config->fieldDimensions.goalAreaWidth / 4 + brain->config->fieldDimensions.penaltyAreaWidth / 4))
+        {
+            tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
+            ty = 0.0;
+        }
+    }
+
+    brain->client->moveToPoseOnField(tx, ty, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
     
 }
 
@@ -542,7 +589,7 @@ NodeStatus GoalieDecide::tick()
     double ballRange = brain->data->ball.range;
     double ballYaw = brain->data->ball.yawToRobot;
     
-    double position = -(brain->config->fieldDimensions.length / 2 + brain->config->fieldDimensions.penaltyAreaLength);
+    double field_position = -(brain->config->fieldDimensions.length / 2 + brain->config->fieldDimensions.penaltyAreaLength);
 
     string newDecision;
     auto color = 0xFFFFFFFF; // for log
@@ -551,17 +598,17 @@ NodeStatus GoalieDecide::tick()
         newDecision = "find";
         color = 0x0000FFFF;
     }
-    else if (brain->data->ball.posToField.x > position - static_cast<double>(lastDecision == "retreat")) && (lastDecision != "positioning")
+    else if ((brain->data->ball.posToField.x > field_position - static_cast<double>(lastDecision == "retreat")) && (lastDecision != "positioning"))
     {
         newDecision = "retreat";
         color = 0xFF00FFFF;
     }
-    else if (brain->data-> ball.posToField.x > position)
+    else if (brain->data->ball.posToField.x > field_position)
     {
         newDecision = "positioning";
         color = 0xFFFF00FF;
     }
-    else if (brain->data->ball.posToField.x < position)
+    else if (brain->data->ball.posToField.x < field_position)
     {
         newDecision = "chase";
         color = 0x00FF00FF;
