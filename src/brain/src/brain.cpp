@@ -149,6 +149,11 @@ void Brain::updateBallMemory()
     tree->setEntry<double>("ball_range", data->ball.range);
     data->ball.yawToRobot = atan2(data->ball.posToRobot.y, data->ball.posToRobot.x);
     data->ball.pitchToRobot = asin(config->robotHeight / data->ball.range);
+    
+    data->ballBuffer.push_front(data->ball);
+    if (data->ballBuffer.size() >= 10){
+        data->ballBuffer.erase(data->ballBuffer[data->ballBuffer.size() - 1]);
+    }
 
     // mark ball as lost if long time no see
     if (get_clock()->now().seconds() - data->ball.timePoint.seconds() > config->memoryLength)
