@@ -27,6 +27,7 @@ void BrainTree::init()
     REGISTER_BUILDER(Chase)
     REGISTER_BUILDER(SimpleChase)
     REGISTER_BUILDER(Adjust)
+    REGISTER_BUILDER(AdjustToFieldPoint)
     REGISTER_BUILDER(Kick)
     REGISTER_BUILDER(StrikerDecide)
     REGISTER_BUILDER(CamTrackBall)
@@ -328,6 +329,51 @@ NodeStatus Adjust::tick()
 
     double vx = 0, vy = 0, vtheta = 0;
     double kickDir = (position == "defense") ? atan2(brain->data->ball.posToField.y, brain->data->ball.posToField.x + brain->config->fieldDimensions.length / 2) : atan2(-brain->data->ball.posToField.y, brain->config->fieldDimensions.length / 2 - brain->data->ball.posToField.x);
+    double dir_rb_f = brain->data->robotBallAngleToField;
+    double deltaDir = toPInPI(kickDir - dir_rb_f);
+    double dir = deltaDir > 0 ? -1.0 : 1.0;
+    double ballRange = brain->data->ball.range;
+    double ballYaw = brain->data->ball.yawToRobot;
+
+    double s = 0.4;
+    double r = 0.8;
+    vx = -s * dir * sin(ballYaw);
+    if (ballRange > maxRange)
+        vx += 0.1;
+    if (ballRange < maxRange)
+        vx -= 0.1;
+    vy = s * dir * cos(ballYaw);
+    vtheta = (ballYaw - dir * s) / r;
+
+    vx = cap(vx, vxLimit, -vxLimit);
+    vy = cap(vy, vyLimit, -vyLimit);
+    vtheta = cap(vtheta, vthetaLimit, -vthetaLimit);
+
+    brain->client->setVelocity(vx, vy, vtheta);
+    return NodeStatus::SUCCESS;
+}
+
+NodeStatus AdjustToFieldPoint::tick()
+{
+    if (!brain->tree->getEntry<bool>("ball_location_known"))
+    {
+        return NodeStatus::SUCCESS;
+    }
+
+    double target_x, target_y, turnThreshold, vxLimit, vyLimit, vthetaLimit, maxRange, minRange;
+    getInput("target_x", target_x);
+    getInput("target_y", target_y);
+    getInput("turn_threshold", turnThreshold);
+    getInput("vx_limit", vxLimit);
+    getInput("vy_limit", vyLimit);
+    getInput("vtheta_limit", vthetaLimit);
+    getInput("max_range", maxRange);
+    getInput("min_range", minRange);
+    string position;
+    getInput("position", position);
+
+    double vx = 0, vy = 0, vtheta = 0;
+    double kickDir = atan2(target_y - data->ball.posToField.y, target_x - data->ball.posToField.x);
     double dir_rb_f = brain->data->robotBallAngleToField;
     double deltaDir = toPInPI(kickDir - dir_rb_f);
     double dir = deltaDir > 0 ? -1.0 : 1.0;
