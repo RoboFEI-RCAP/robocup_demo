@@ -311,9 +311,14 @@ NodeStatus SimpleChase::tick()
     return NodeStatus::SUCCESS;
 }
 
+
 NodeStatus Positioning::tick()
 {
-    double tx, ty, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance;
+    Pose2D start_pos = {}, ending_pos = {};
+    
+    double ttheta = 0, longRangeThreshold = 1.5, turnThreshold = 0.4, vxLimit = 1.0, vyLimit = 0.5, vthetaLimit = 0.4, xTolerance = 0.2, yTolerance = 0.2, thetaTolerance = 0.1;
+
+    double tx, ty;
 
     float offsetGoalie = 0.3;
 
@@ -333,14 +338,33 @@ NodeStatus Positioning::tick()
 
     bool interception;
 
-    if(interception)
-    {
+    start_pos.x = brain->data->ballBuffer[0].posToField.x;
+    start_pos.y = brain->data->ballBuffer[0].posToField.y;
+    ending_pos.x = brain->data->ballBuffer[2].posToField.x;
+    ending_pos.y = brain->data->ballBuffer[2].posToField.y;
 
-    }
-    else
-    {
+    double goal_x = -(brain->config->fieldDimensions.length / 2 + brain->config->fieldDimensions.penaltyAreaLength);
+    double goal_y = 0;
+    if (abs(start_pos.x - ending_pos.x) > 0.5 || abs(start_pos.y - ending_pos.y) > 0.5) {
+        // If the ball has moved, create a line from the start to the end position
+        double a = (ending_pos.y - start_pos.y) / (ending_pos.x - start_pos.x);
+        double b = start_pos.y - a * start_pos.x;
+
+        // Check intersection with the goal line
+        double expected_goal_y = a * goal_x + b;
+        
+        if (expected_goal_y > -brain->config->fieldDimensions.goalAreaWidth / 2 && expected_goal_y < brain->config->fieldDimensions.goalAreaWidth / 2) {
+            brain->client->moveToPoseOnField(goal_x, expected_goal_y, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
+        }
+    } else {
+        // Bola parada
+        double a = (goal_y - start_pos.y) / (goal_x - start_pos.x);
+        double b = start_pos.y - a * start_pos.x;
+    
+        double expected_goal_y = a * goal_x + b;
+
         if((brain->data->ball.posToField.x < -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.penaltyAreaLength)) && 
-                brain->data->ball.posToField.y < -(brain->config->fieldDimensions.penaltyAreaWidth / 2))
+            brain->data->ball.posToField.y < -(brain->config->fieldDimensions.penaltyAreaWidth / 2))
         {
             tx = -brain->config->fieldDimensions.length / 2 - offsetGoalie;
             ty = -brain->config->fieldDimensions.goalWidth / 2 - offsetGoalie;
@@ -370,10 +394,14 @@ NodeStatus Positioning::tick()
             tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
             ty = 0.0;
         }
-    }
+        else
+        {
+            tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
+            ty = 0.0;
+        }
 
-    brain->client->moveToPoseOnField(tx, ty, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
-    
+        brain->client->moveToPoseOnField(tx, ty, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
+    }
 }
 
 NodeStatus Adjust::tick()
@@ -598,12 +626,12 @@ NodeStatus GoalieDecide::tick()
         newDecision = "find";
         color = 0x0000FFFF;
     }
-    else if ((brain->data->ball.posToField.x > field_position - static_cast<double>(lastDecision == "retreat")) && (lastDecision != "positioning"))
+    else if (brain->data->ball.posToField.x > field_position - static_cast<double>(lastDecision == "retreat") && (lastDecision != "positioning"))
     {
         newDecision = "retreat";
         color = 0xFF00FFFF;
     }
-    else if (brain->data->ball.posToField.x > field_position)
+    else if (brain->data-> ball.posToField.x > field_position)
     {
         newDecision = "positioning";
         color = 0xFFFF00FF;

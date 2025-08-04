@@ -1,29 +1,101 @@
-<root BTCPP_format="4" >
-   <include path="./subtree_cam_find_and_track_ball.xml" />
-   <BehaviorTree ID="GoalKeeperPlay">
-      <ReactiveSequence >
-         <ReactiveSequence _while="!gamecontroller_isKickOffExecuted" name="wait">
-            <SubTree ID="CamFindAndTrackBall" _autoremap="true" />
-            <SetVelocity />
-         </ReactiveSequence>
-         <ReactiveSequence _while="gamecontroller_isKickOffExecuted" name="start">
-            <SubTree ID="CamFindAndTrackBall" _autoremap="true" />
-            <Sequence>
-                  <GoalieDecide decision_out="{decision}" decision_in="{decision}" chase_threshold="1.2" />
-                  <Sequence _while="decision == 'find'">
-                     <RobotFindBall _while="ball_range <= 3.0" vyaw_limit="1.0" />
-                     <MoveToPoseOnField _while="ball_range > 3.0" long_range_threshold="100.0" x="{goal_start_x}" />
-                  </Sequence>
-                  <MoveToPoseOnField _while="decision == 'retreat'" long_range_threshold="100.0" x="{goal_start_x}" />
-                  <Chase   _while="decision == 'chase'"  vx_limit="1.0"  vy_limit="0.4"  vtheta_limit="1.0"  dist="1.0"/>
-                  <Adjust  _while="decision == 'adjust'"   position="defense" turn_threshold="0.4" max_range="0.6" min_range="0.4" vx_limit="0.2" vy_limit="0.2" vtheta_limit="1.0"  />
-                  <Sequence  _while="decision == 'kick'">
-                     <SetVelocity />
-                     <Sleep msec="1000" />
-                     <Kick vx_limit="1.2" vy_limit="0.4" min_msec_kick="1000"/>
-                  </Sequence>
-            </Sequence>
-         </ReactiveSequence>
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <include path="./subtree_cam_find_and_track_ball.xml"/>
+
+  <BehaviorTree ID="GoalKeeperPlay">
+    <ReactiveSequence>
+      <ReactiveSequence name="wait"
+                        _while="!gamecontroller_isKickOffExecuted">
+        <SubTree ID="CamFindAndTrackBall"
+                 _autoremap="true"/>
+        <SetVelocity/>
       </ReactiveSequence>
-   </BehaviorTree>
+      <ReactiveSequence name="start"
+                        _while="gamecontroller_isKickOffExecuted">
+        <SubTree ID="CamFindAndTrackBall"
+                 _autoremap="true"/>
+        <Sequence>
+          <GoalieDecide decision_out="{decision}"
+                        decision_in="{decision}"
+                        chase_threshold="1.2"/>
+          <Sequence _while="decision == &apos;find&apos;">
+            <RobotFindBall vyaw_limit="1.0"
+                           _while="ball_range &lt;= 3.0"/>
+            <MoveToPoseOnField long_range_threshold="100.0"
+                               x="{goal_start_x}"
+                               _while="ball_range &gt; 3.0"/>
+          </Sequence>
+          <MoveToPoseOnField long_range_threshold="100.0"
+                             x="{goal_start_x}"
+                             _while="decision == &apos;retreat&apos;"/>
+          <Chase vx_limit="1.0"
+                 vy_limit="0.4"
+                 vtheta_limit="1.0"
+                 dist="1.0"
+                 _while="decision == &apos;chase&apos;"/>
+          <Positioning _while="decision == &apos;positioning&apos;"/>
+          <Adjust position="defense"
+                  turn_threshold="0.4"
+                  max_range="0.6"
+                  min_range="0.4"
+                  vx_limit="0.2"
+                  vy_limit="0.2"
+                  vtheta_limit="1.0"
+                  _while="decision == &apos;adjust&apos;"/>
+          <Sequence _while="decision == &apos;kick&apos;">
+            <SetVelocity/>
+            <Sleep msec="1000"/>
+            <Kick vx_limit="1.2"
+                  vy_limit="0.4"
+                  min_msec_kick="1000"/>
+          </Sequence>
+        </Sequence>
+      </ReactiveSequence>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Action ID="Adjust"
+            editable="true">
+      <input_port name="position"/>
+      <input_port name="turn_threshold"/>
+      <input_port name="max_range"/>
+      <input_port name="min_range"/>
+      <input_port name="vx_limit"/>
+      <input_port name="vy_limit"/>
+      <input_port name="vtheta_limit"/>
+    </Action>
+    <Action ID="Chase"
+            editable="true">
+      <input_port name="vx_limit"/>
+      <input_port name="vy_limit"/>
+      <input_port name="vtheta_limit"/>
+      <input_port name="dist"/>
+    </Action>
+    <Action ID="GoalieDecide"
+            editable="true">
+      <input_port name="decision_out"/>
+      <input_port name="decision_in"/>
+      <input_port name="chase_threshold"/>
+    </Action>
+    <Action ID="Kick"
+            editable="true">
+      <input_port name="vx_limit"/>
+      <input_port name="vy_limit"/>
+      <input_port name="min_msec_kick"/>
+    </Action>
+    <Action ID="MoveToPoseOnField"
+            editable="true">
+      <input_port name="long_range_threshold"/>
+      <input_port name="x"/>
+    </Action>
+    <Action ID="RobotFindBall"
+            editable="true">
+      <input_port name="vyaw_limit"/>
+    </Action>
+    <Action ID="SetVelocity"
+            editable="true"/>
+  </TreeNodesModel>
+
 </root>
