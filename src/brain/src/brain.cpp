@@ -50,6 +50,9 @@ void Brain::init()
     locator->init(config->fieldDimensions, 4, 0.5);
 
     tree->init();
+    
+    tree->setEntry<double>("goal_start_x", -(config->fieldDimensions.length / 2) + config->fieldDimensions.penaltyAreaLength/2);
+    tree->setEntry<double>("striker_start_x", -(config->fieldDimensions.circleRadius + 0.3));
 
     client->init();
 
