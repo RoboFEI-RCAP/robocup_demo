@@ -41,6 +41,7 @@ void BrainTree::init()
     REGISTER_BUILDER(WaveHand)
     REGISTER_BUILDER(GoBackInField)
     REGISTER_BUILDER(TurnOnSpot)
+    REGISTER_BUILDER(Positioning)
 
     // Action Nodes for debug
     REGISTER_BUILDER(PrintMsg)
@@ -84,6 +85,7 @@ void BrainTree::initEntry()
 
     setEntry<double>("goal_start_x", -(brain->config->fieldDimensions.length / 2) + brain->config->fieldDimensions.penaltyAreaLength / 2);
     setEntry<double>("striker_start_x", -(brain->config->fieldDimensions.circleRadius + 0.3));
+
 }
 
 void BrainTree::tick()
@@ -309,6 +311,24 @@ NodeStatus SimpleChase::tick()
     return NodeStatus::SUCCESS;
 }
 
+NodeStatus Positioning::tick()
+{
+    if (brain->data->ballBuffer.size() != 10){
+        return NodeStatus::FAILURE;
+    }
+
+    // Calculate the average position of the ball from the buffer
+    Pose2D avgBallPos = {};
+    for (const auto &ball : brain->data->ballBuffer) {
+        avgBallPos.x += ball.posToField.x;
+        avgBallPos.y += ball.posToField.y;
+    }
+
+    avgBallPos.x /= brain->data->ballBuffer.size();
+    avgBallPos.y /= brain->data->ballBuffer.size();
+    
+}
+
 NodeStatus Adjust::tick()
 {
     if (!brain->tree->getEntry<bool>("ball_location_known"))
@@ -504,6 +524,7 @@ void RotateForRelocate::onHalted()
 }
 
 
+
 NodeStatus GoalieDecide::tick()
 {
 
@@ -520,6 +541,8 @@ NodeStatus GoalieDecide::tick()
     bool angleIsGood = (dir_rb_f > -M_PI / 2 && dir_rb_f < M_PI / 2);
     double ballRange = brain->data->ball.range;
     double ballYaw = brain->data->ball.yawToRobot;
+    
+    double position = -(brain->config->fieldDimensions.length / 2 + brain->config->fieldDimensions.penaltyAreaLength);
 
     string newDecision;
     auto color = 0xFFFFFFFF; // for log
@@ -528,12 +551,17 @@ NodeStatus GoalieDecide::tick()
         newDecision = "find";
         color = 0x0000FFFF;
     }
-    else if (brain->data->ball.posToField.x > 0 - static_cast<double>(lastDecision == "retreat"))
+    else if (brain->data->ball.posToField.x > position - static_cast<double>(lastDecision == "retreat")) && (lastDecision != "positioning")
     {
         newDecision = "retreat";
         color = 0xFF00FFFF;
     }
-    else if (ballRange > chaseRangeThreshold * (lastDecision == "chase" ? 0.9 : 1.0))
+    else if (brain->data-> ball.posToField.x > position)
+    {
+        newDecision = "positioning";
+        color = 0xFFFF00FF;
+    }
+    else if (brain->data->ball.posToField.x < position)
     {
         newDecision = "chase";
         color = 0x00FF00FF;

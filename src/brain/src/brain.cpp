@@ -152,7 +152,7 @@ void Brain::updateBallMemory()
     
     data->ballBuffer.push_front(data->ball);
     if (data->ballBuffer.size() >= 10){
-        data->ballBuffer.erase(data->ballBuffer[data->ballBuffer.size() - 1]);
+        data->ballBuffer.pop_back();
     }
 
     // mark ball as lost if long time no see

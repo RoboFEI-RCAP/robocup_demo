@@ -170,6 +170,25 @@ private:
     double _dir = 1.0; // 1.0 circle back from left, -1.0  circle back from right
 };
 
+// Chasing the ball: If the ball is behind the robot, it will move around to the back of the ball.
+class Positioning : public SyncActionNode
+{
+public:
+    Positioning(const string &name, const NodeConfig &config, Brain *_brain) : SyncActionNode(name, config), brain(_brain) {}
+
+    static PortsList providedPorts()
+    {
+        return {};
+    }
+
+    NodeStatus tick() override;
+
+private:
+    Brain *brain;
+    string _state;     // circl_back, chase;
+    double _dir = 1.0; // 1.0 circle back from left, -1.0  circle back from right
+};
+
 // After approaching the ball, adjust to the appropriate kicking angle for offense or defense.
 class Adjust : public SyncActionNode
 {
