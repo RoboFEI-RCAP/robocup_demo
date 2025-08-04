@@ -149,6 +149,11 @@ void Brain::updateBallMemory()
     tree->setEntry<double>("ball_range", data->ball.range);
     data->ball.yawToRobot = atan2(data->ball.posToRobot.y, data->ball.posToRobot.x);
     data->ball.pitchToRobot = asin(config->robotHeight / data->ball.range);
+    
+    data->ballBuffer.push_front(data->ball);
+    if (data->ballBuffer.size() >= 10){
+        data->ballBuffer.erase(data->ballBuffer[data->ballBuffer.size() - 1]);
+    }
 
     // mark ball as lost if long time no see
     if (get_clock()->now().seconds() - data->ball.timePoint.seconds() > config->memoryLength)
@@ -521,12 +526,15 @@ void Brain::odometerCallback(const booster_interface::msg::Odometer &msg)
 
         for(int i = 0; i < data->fieldData.opponentData.size(); i++)
         {
-          log->log(
-              robotName + to_string(i),
-              rerun::Points2D({ {data->fieldData.opponentData.at(i).pos.x,
-                                -data->fieldData.opponentData.at(i).pos.y} })
-                  .with_radii({0.3})
-                  .with_colors({0xFF0000FF}));
+            for(int j = 0; j < data->fieldData.opponentData.at(i).size(); j++)
+            {
+                log->log(
+                    robotName + to_string(i) + "_" + to_string(j),
+                    rerun::Points2D({ {data->fieldData.opponentData.at(i).at(j).pos.x,
+                                      -data->fieldData.opponentData.at(i).at(j).pos.y} })
+                        .with_radii({0.3})
+                        .with_colors({0xFF0000FF}));
+            }
         }
     }
 }
