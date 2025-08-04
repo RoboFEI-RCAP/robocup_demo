@@ -39,6 +39,8 @@ public:
     double yawOffset;       // Corresponds to robot.yaw_offset fix the issue of leftward bias during distance measurement
 
     bool rerunLogEnable;       // Corresponds to rerunLog.enable  Whether to enable rerunLog
+    bool rerunLogCameraEnable;  // Corresponds to rerunLog.enable  Whether to enable camera image logging
+    bool rerunLogLowStateEnable;// Corresponds to rerunLog.enable  Whether to enable low state logging
     string rerunLogServerAddr; // Corresponds to rerunLog.server_addr  rerunLog address
     int rerunLogImgInterval;   // Corresponds to rerunLog.img_interval the interval to record the images
 

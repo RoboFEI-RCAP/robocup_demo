@@ -78,6 +78,8 @@ private:
 
     void updateMemory();
 
+    void mergeBallInfo();
+
     // ------------------------------------------------------ SUB CALLBACKS ------------------------------------------------------
     void joystickCallback(const booster_interface::msg::RemoteControllerState &msg);
     void gameControlCallback(const game_controller_interface::msg::GameControlData &msg);
