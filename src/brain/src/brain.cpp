@@ -529,7 +529,7 @@ void Brain::odometerCallback(const booster_interface::msg::Odometer &msg)
             for(int j = 0; j < data->fieldData.opponentData.at(i).size(); j++)
             {
                 log->log(
-                    robotName + to_string(i) + "_" + to_string(j),
+                    "field/opponent_" + to_string(i) + "_" + to_string(j),
                     rerun::Points2D({ {data->fieldData.opponentData.at(i).at(j).pos.x,
                                       -data->fieldData.opponentData.at(i).at(j).pos.y} })
                         .with_radii({0.3})
