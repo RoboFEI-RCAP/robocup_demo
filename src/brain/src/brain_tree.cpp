@@ -311,22 +311,41 @@ NodeStatus SimpleChase::tick()
     return NodeStatus::SUCCESS;
 }
 
+
 NodeStatus Positioning::tick()
 {
-    if (brain->data->ballBuffer.size() != 10){
-        return NodeStatus::FAILURE;
-    }
-
-    // Calculate the average position of the ball from the buffer
-    Pose2D avgBallPos = {};
-    for (const auto &ball : brain->data->ballBuffer) {
-        avgBallPos.x += ball.posToField.x;
-        avgBallPos.y += ball.posToField.y;
-    }
-
-    avgBallPos.x /= brain->data->ballBuffer.size();
-    avgBallPos.y /= brain->data->ballBuffer.size();
+    Pose2D start_pos = {}, ending_pos = {};
     
+    double ttheta = 0, longRangeThreshold = 1.5, turnThreshold = 0.4, vxLimit = 1.0, vyLimit = 0.5, vthetaLimit = 0.4, xTolerance = 0.2, yTolerance = 0.2, thetaTolerance = 0.1;
+
+
+    start_pos.x = brain->data->ballBuffer[0].posToField.x;
+    start_pos.y = brain->data->ballBuffer[0].posToField.y;
+    ending_pos.x = brain->data->ballBuffer[2].posToField.x;
+    ending_pos.y = brain->data->ballBuffer[2].posToField.y;
+
+    double goal_x = -(brain->config->fieldDimensions.length / 2 + brain->config->fieldDimensions.penaltyAreaLength);
+    double goal_y = 0;
+    if (abs(start_pos.x - ending_pos.x) > 0.5 || abs(start_pos.y - ending_pos.y) > 0.5) {
+        // If the ball has moved, create a line from the start to the end position
+        double a = (ending_pos.y - start_pos.y) / (ending_pos.x - start_pos.x);
+        double b = start_pos.y - a * start_pos.x;
+
+        // Check intersection with the goal line
+        double expected_goal_y = a * goal_x + b;
+        
+        if (expected_goal_y > -brain->config->fieldDimensions.goalAreaWidth / 2 && expected_goal_y < brain->config->fieldDimensions.goalAreaWidth / 2) {
+            brain->client->moveToPoseOnField(goal_x, expected_goal_y, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
+        } // fazer a lógica dos quadrantes
+    } else {
+        // Bola parada
+        double a = (goal_y - start_pos.y) / (goal_x - start_pos.x);
+        double b = start_pos.y - a * start_pos.x;
+    
+        double expected_goal_y = a * goal_x + b;
+        
+        brain->client->moveToPoseOnField(goal_x, expected_goal_y, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
+    }
 }
 
 NodeStatus Adjust::tick()
@@ -542,7 +561,7 @@ NodeStatus GoalieDecide::tick()
     double ballRange = brain->data->ball.range;
     double ballYaw = brain->data->ball.yawToRobot;
     
-    double position = -(brain->config->fieldDimensions.length / 2 + brain->config->fieldDimensions.penaltyAreaLength);
+    double field_position = -(brain->config->fieldDimensions.length / 2 + brain->config->fieldDimensions.penaltyAreaLength);
 
     string newDecision;
     auto color = 0xFFFFFFFF; // for log
@@ -551,17 +570,17 @@ NodeStatus GoalieDecide::tick()
         newDecision = "find";
         color = 0x0000FFFF;
     }
-    else if (brain->data->ball.posToField.x > position - static_cast<double>(lastDecision == "retreat")) && (lastDecision != "positioning")
+    else if (brain->data->ball.posToField.x > field_position - static_cast<double>(lastDecision == "retreat") && (lastDecision != "positioning"))
     {
         newDecision = "retreat";
         color = 0xFF00FFFF;
     }
-    else if (brain->data-> ball.posToField.x > position)
+    else if (brain->data-> ball.posToField.x > field_position)
     {
         newDecision = "positioning";
         color = 0xFFFF00FF;
     }
-    else if (brain->data->ball.posToField.x < position)
+    else if (brain->data->ball.posToField.x < field_position)
     {
         newDecision = "chase";
         color = 0x00FF00FF;
