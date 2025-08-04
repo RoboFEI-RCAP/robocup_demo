@@ -27,7 +27,7 @@ void BrainTree::init()
     REGISTER_BUILDER(Chase)
     REGISTER_BUILDER(SimpleChase)
     REGISTER_BUILDER(Adjust)
-    REGISTER_BUILDER(AdjustToFieldPoint)
+    REGISTER_BUILDER(AdjustToAssist)
     REGISTER_BUILDER(Kick)
     REGISTER_BUILDER(StrikerDecide)
     REGISTER_BUILDER(CamTrackBall)
@@ -353,16 +353,30 @@ NodeStatus Adjust::tick()
     return NodeStatus::SUCCESS;
 }
 
-NodeStatus AdjustToFieldPoint::tick()
+NodeStatus AdjustToAssist::onStart()
+{
+    double robot_id;
+    getInput("robot_id", robot_id);
+    for(int i = 0; i < brain->data->fieldData.allyData.size(); i++)
+    {
+        if(brain->data->fieldData.allyData.at(i).playerId == robot_id)
+        {
+            _target_x = brain->data->fieldData.allyData.at(i).pos.x;
+            _target_y = brain->data->fieldData.allyData.at(i).pos.y;
+            return NodeStatus::RUNNING;
+        }
+    }
+    return NodeStatus::SUCCESS;
+}
+
+NodeStatus AdjustToAssist::onRunning()
 {
     if (!brain->tree->getEntry<bool>("ball_location_known"))
     {
         return NodeStatus::SUCCESS;
     }
 
-    double target_x, target_y, turnThreshold, vxLimit, vyLimit, vthetaLimit, maxRange, minRange;
-    getInput("target_x", target_x);
-    getInput("target_y", target_y);
+    double turnThreshold, vxLimit, vyLimit, vthetaLimit, maxRange, minRange;
     getInput("turn_threshold", turnThreshold);
     getInput("vx_limit", vxLimit);
     getInput("vy_limit", vyLimit);
@@ -373,7 +387,7 @@ NodeStatus AdjustToFieldPoint::tick()
     getInput("position", position);
 
     double vx = 0, vy = 0, vtheta = 0;
-    double kickDir = atan2(target_y - brain->data->ball.posToField.y, target_x - brain->data->ball.posToField.x);
+    double kickDir = atan2(_target_y - brain->data->ball.posToField.y, _target_x - brain->data->ball.posToField.x);
     double dir_rb_f = brain->data->robotBallAngleToField;
     double deltaDir = toPInPI(kickDir - dir_rb_f);
     double dir = deltaDir > 0 ? -1.0 : 1.0;
@@ -397,6 +411,8 @@ NodeStatus AdjustToFieldPoint::tick()
     brain->client->setVelocity(vx, vy, vtheta);
     return NodeStatus::SUCCESS;
 }
+
+void AdjustToAssist::onHalted(){}
 
 NodeStatus StrikerDecide::tick()
 {

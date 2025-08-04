@@ -196,30 +196,34 @@ private:
 };
 
 // Adjust in the direction of a field point
-class AdjustToFieldPoint : public SyncActionNode
+class AdjustToAssist : public StatefulActionNode
 {
 public:
-    AdjustToFieldPoint(const string &name, const NodeConfig &config, Brain *_brain) : SyncActionNode(name, config), brain(_brain) {}
+    AdjustToAssist(const string &name, const NodeConfig &config, Brain *_brain) : StatefulActionNode(name, config), brain(_brain) {}
 
     static PortsList providedPorts()
     {
         return {
-            InputPort<double>("target_x", 0.0, "Target x field point"),
-            InputPort<double>("target_y", 0.0, "Target y field point"),
+            InputPort<int>("target_id", 0.0, "Target id of the robot that will receive the assist"),
             InputPort<double>("turn_threshold", 0.2, "If the angle to the ball exceeds this value, the robot will first turn to face the ball"),
             InputPort<double>("vx_limit", 0.1, "Limit for vx during adjustment, [-limit, limit]"),
             InputPort<double>("vy_limit", 0.1, "Limit for vy during adjustment, [-limit, limit]"),
             InputPort<double>("vtheta_limit", 0.4, "Limit for vtheta during adjustment, [-limit, limit]"),
             InputPort<double>("max_range", 1.5, "When the ball range exceeds this value, move slightly forward"),
             InputPort<double>("min_range", 1.0, "When the ball range is smaller than this value, move slightly backward"),
-            InputPort<string>("position", "offense", "offense | defense, determines which direction to kick the ball"),
         };
     }
 
-    NodeStatus tick() override;
+    NodeStatus onStart() override;
+
+    NodeStatus onRunning() override;
+
+    // callback to execute if the action was aborted by another node
+    void onHalted() override;
 
 private:
     Brain *brain;
+    double _target_x, _target_y;
 };
 
 class Kick : public StatefulActionNode
