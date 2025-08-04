@@ -345,7 +345,6 @@ void BrainCommunication::unicastCommunication() {
         for (const auto &opponent : brain->data->opponents) {
             DetectedRobots detectedRobot;
             detectedRobot.isAlly = false;
-            detectedRobot.playerId = opponent.playerId;
             detectedRobot.pos.x = opponent.posToField.x;
             detectedRobot.pos.y = opponent.posToField.y;
             detectedRobots.push_back(detectedRobot);
