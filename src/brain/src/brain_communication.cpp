@@ -341,6 +341,17 @@ void BrainCommunication::unicastCommunication() {
         msg.ballInfo.fieldPos.y = brain->data->ball.posToField.y;
         msg.ballInfo.range = brain->data->ball.range;
 
+        vector<DetectedRobots> detectedRobots;
+        for (const auto &opponent : brain->data->opponents) {
+            DetectedRobots detectedRobot;
+            detectedRobot.isAlly = false;
+            detectedRobot.playerId = opponent.playerId;
+            detectedRobot.pos.x = opponent.posToField.x;
+            detectedRobot.pos.y = opponent.posToField.y;
+            detectedRobots.push_back(detectedRobot);
+        }
+        msg.opponentsInfo = detectedRobots;
+
         std::lock_guard<std::mutex> lock(_teammate_addresses_mutex);
         for (auto it = _teammate_addresses.begin(); it != _teammate_addresses.end(); ++it) {
             auto ip = it->second.ip;

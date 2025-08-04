@@ -515,6 +515,16 @@ void Brain::odometerCallback(const booster_interface::msg::Odometer &msg)
                   .with_radii({0.3})
                   .with_colors({robotColor}));
         }
+
+        for(int i = 0; i < data->fieldData.opponentData.size(); i++)
+        {
+          log->log(
+              robotName + to_string(i),
+              rerun::Points2D({ {data->fieldData.opponentData.at(i).pos.x,
+                                -data->fieldData.opponentData.at(i).pos.y} })
+                  .with_radii({0.3})
+                  .with_colors({0xFF0000FF}));
+        }
     }
 }
 
@@ -766,12 +776,5 @@ void Brain::detectProcessRobots(const vector<GameObject> &robotObjs)
             continue;
 
         data->opponents.push_back(robot);
-
-        rerun::Color opponentColor(0xFF0000FF);
-        log->log(
-            robotName + to_string(i),
-            rerun::Points2D({{robot.posToField.x, -robot.posToField.y}})
-                .with_radii({0.3})
-                .with_colors({opponentColor}));
     }
 }
