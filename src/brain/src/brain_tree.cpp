@@ -355,6 +355,12 @@ NodeStatus Positioning::tick()
         
         if (expected_goal_y > -brain->config->fieldDimensions.goalAreaWidth / 2 && expected_goal_y < brain->config->fieldDimensions.goalAreaWidth / 2) {
             brain->client->moveToPoseOnField(goal_x, expected_goal_y, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
+            brain->log->log("field/expected_position"),
+              rerun::Points2D({ {goal_x,
+                                -expected_goal_y} })
+                  .with_radii({0.3})
+                  .with_colors({0xFF00FF00});
+            return NodeStatus::SUCCESS;
         }
     } else {
         // Bola parada
@@ -401,6 +407,12 @@ NodeStatus Positioning::tick()
         }
 
         brain->client->moveToPoseOnField(tx, ty, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
+        brain->log->log("field/expected_position"),
+        rerun::Points2D({ {tx,
+                    -ty} })
+        .with_radii({0.3})
+        .with_colors({0xFF00FF00});
+        return NodeStatus::SUCCESS;
     }
 }
 
