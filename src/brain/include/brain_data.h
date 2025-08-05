@@ -34,7 +34,9 @@ public:
     // Ball
     bool ballDetected = false;    // Whether the camera has detected the ball
     GameObject ball;              // Records the ball's information, including position, bounding box, etc.
+    GameObject mergedBall;              // Records the ball's information, including position, bounding box, etc.
     double robotBallAngleToField; // The angle between the robot's vector to the ball and the X-axis in the field coordinate system, (-PI, PI]
+
     // 起身
     RobotRecoveryState recoveryState = RobotRecoveryState::IS_READY;
     bool isRecoveryAvailable = false; // 是否可以起身

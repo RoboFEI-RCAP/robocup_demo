@@ -52,6 +52,7 @@ void BrainConfig::print(ostream &os)
     os << "yawOffset = " << yawOffset << endl;
     os << "----------------------------------------" << endl;
     os << "rerunLogEnable = " << rerunLogEnable << endl;
+    os << "rerunLogCameraEnable = " << rerunLogCameraEnable << endl;
     os << "rerunLogServerAddr = " << rerunLogServerAddr << endl;
     os << "rerunLogImgInterval = " << rerunLogImgInterval << endl;
     os << "----------------------------------------" << endl;

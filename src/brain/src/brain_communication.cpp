@@ -340,6 +340,7 @@ void BrainCommunication::unicastCommunication() {
         msg.ballInfo.fieldPos.x = brain->data->ball.posToField.x;
         msg.ballInfo.fieldPos.y = brain->data->ball.posToField.y;
         msg.ballInfo.range = brain->data->ball.range;
+        msg.ballInfo.confidence = brain->data->ball.confidence;
 
         vector<DetectedRobots> detectedRobots;
         for (const auto &opponent : brain->data->opponents) {
