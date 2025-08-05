@@ -141,17 +141,17 @@ void Brain::mergeBallInfo()
     double sumX = 0, sumY = 0, avgX = 0, avgY = 0, sumWeights = 0, weight;
     int nBalls = 0;
 
-    for (int n = 0; n < allyBallData.size(); n++) 
+    for (int n = 0; n < data->fieldData.allyBallData.size(); n++) 
     {
-        if (allyBallData.at(n).detected && allyBallData.at(n).playerId != -1)
+        if (data->fieldData.allyBallData.at(n).detected && data->fieldData.allyBallData.at(n).playerId != -1)
         {
-            weight = allyBallData.at(n).confidence / (allyBallData.at(n).range + allyBallData.at(n).range)
-            sumX += allyBallData.at(n).fieldPos.x * weight;
-            sumY += allyBallData.at(n).fieldPos.y * weight;
+            weight = data->fieldData.allyBallData.at(n).confidence / (data->fieldData.allyBallData.at(n).range + data->fieldData.allyBallData.at(n).range);
+            sumX += data->fieldData.allyBallData.at(n).fieldPos.x * weight;
+            sumY += data->fieldData.allyBallData.at(n).fieldPos.y * weight;
             sumWeights += weight;
 
-            avgX += allyBallData.at(n).fieldPos.x;
-            avgY += allyBallData.at(n).fieldPos.y;
+            avgX += data->fieldData.allyBallData.at(n).fieldPos.x;
+            avgY += data->fieldData.allyBallData.at(n).fieldPos.y;
             nBalls++;
         }
     }
