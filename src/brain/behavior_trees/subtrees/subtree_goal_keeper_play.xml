@@ -12,6 +12,9 @@
       </ReactiveSequence>
       <ReactiveSequence name="start"
                         _while="gamecontroller_isKickOffExecuted">
+        <Delay delay_msec="10000">
+          <SelfLocate mode="trust_direction"/>
+        </Delay>
         <SubTree ID="CamFindAndTrackBall"
                  _autoremap="true"/>
         <Sequence>
@@ -90,9 +93,15 @@
       <input_port name="long_range_threshold"/>
       <input_port name="x"/>
     </Action>
+    <Action ID="Positioning"
+            editable="true"/>
     <Action ID="RobotFindBall"
             editable="true">
       <input_port name="vyaw_limit"/>
+    </Action>
+    <Action ID="SelfLocate"
+            editable="true">
+      <input_port name="mode"/>
     </Action>
     <Action ID="SetVelocity"
             editable="true"/>
