@@ -322,6 +322,8 @@ NodeStatus Positioning::tick()
 
     float offsetGoalie = 0.3;
 
+    float deltaPosThreshold = 0.5;
+
     if (brain->data->ballBuffer.size() != 10){
         return NodeStatus::FAILURE;
     }
@@ -345,7 +347,7 @@ NodeStatus Positioning::tick()
 
     double goal_x = -(brain->config->fieldDimensions.length / 2 + brain->config->fieldDimensions.penaltyAreaLength);
     double goal_y = 0;
-    if (abs(start_pos.x - ending_pos.x) > 0.5 || abs(start_pos.y - ending_pos.y) > 0.5) {
+    if (abs(start_pos.x - ending_pos.x) > deltaPosThreshold || abs(start_pos.y - ending_pos.y) > deltaPosThreshold) {
         // If the ball has moved, create a line from the start to the end position
         double a = (ending_pos.y - start_pos.y) / (ending_pos.x - start_pos.x);
         double b = start_pos.y - a * start_pos.x;
@@ -353,8 +355,17 @@ NodeStatus Positioning::tick()
         // Check intersection with the goal line
         double expected_goal_y = a * goal_x + b;
         
-        if (expected_goal_y > -brain->config->fieldDimensions.goalAreaWidth / 2 && expected_goal_y < brain->config->fieldDimensions.goalAreaWidth / 2) {
-            brain->client->moveToPoseOnField(goal_x, expected_goal_y, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
+        if (expected_goal_y > -brain->config->fieldDimensions.goalWidth / 2 && expected_goal_y < brain->config->fieldDimensions.goalWidth / 2) {
+            tx = goal_x;
+            ty = expected_goal_y;
+        }
+        else if(expected_goal_y < -brain->config->fieldDimensions.goalWidth / 2){
+            tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
+            ty = -brain->config->fieldDimensions.goalWidth / 2 - offsetGoalie;
+        }
+        else if(expected_goal_y > brain->config->fieldDimensions.goalWidth / 2){
+            tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
+            ty = brain->config->fieldDimensions.goalWidth / 2 + offsetGoalie;
         }
     } else {
         // Bola parada
@@ -364,37 +375,37 @@ NodeStatus Positioning::tick()
         double expected_goal_y = a * goal_x + b;
 
         if((brain->data->ball.posToField.x < -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.penaltyAreaLength)) && 
-            brain->data->ball.posToField.y < -(brain->config->fieldDimensions.penaltyAreaWidth / 2))
+            brain->data->ball.posToField.y < -(brain->config->fieldDimensions.penaltyAreaWidth / 2)) // Quadrante inferior esquerdo
         {
-            tx = -brain->config->fieldDimensions.length / 2 - offsetGoalie;
+            tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
             ty = -brain->config->fieldDimensions.goalWidth / 2 - offsetGoalie;
         }
         else if((brain->data->ball.posToField.x < -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.penaltyAreaLength)) && 
-                    brain->data->ball.posToField.y > (brain->config->fieldDimensions.penaltyAreaWidth / 2))
+                    brain->data->ball.posToField.y > (brain->config->fieldDimensions.penaltyAreaWidth / 2)) // Quadrante inferior direito
         {
-            tx = -brain->config->fieldDimensions.length / 2 - offsetGoalie;
+            tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
             ty = brain->config->fieldDimensions.goalWidth / 2 + offsetGoalie;
         }
         else if((brain->data->ball.posToField.x > -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.penaltyAreaLength)) && 
-                    brain->data->ball.posToField.y < -(brain->config->fieldDimensions.goalAreaWidth / 4 + brain->config->fieldDimensions.penaltyAreaWidth / 4))
+                    brain->data->ball.posToField.y < -(brain->config->fieldDimensions.goalAreaWidth / 4 + brain->config->fieldDimensions.penaltyAreaWidth / 4)) // Quadrante superior esquerdo
         {
             tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
             ty = -brain->config->fieldDimensions.goalWidth / 4;
         }
         else if((brain->data->ball.posToField.x > -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.penaltyAreaLength)) && 
-                    brain->data->ball.posToField.y > (brain->config->fieldDimensions.goalAreaWidth / 4 + brain->config->fieldDimensions.penaltyAreaWidth / 4))
+                    brain->data->ball.posToField.y > (brain->config->fieldDimensions.goalAreaWidth / 4 + brain->config->fieldDimensions.penaltyAreaWidth / 4)) // Quadrante superior direito
         {
             tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
             ty = brain->config->fieldDimensions.goalWidth / 4;
         }
         else if((brain->data->ball.posToField.x > -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.penaltyAreaLength)) && 
                     brain->data->ball.posToField.y < (brain->config->fieldDimensions.goalAreaWidth / 4 + brain->config->fieldDimensions.penaltyAreaWidth / 4) && 
-                    brain->data->ball.posToField.y > -(brain->config->fieldDimensions.goalAreaWidth / 4 + brain->config->fieldDimensions.penaltyAreaWidth / 4))
+                    brain->data->ball.posToField.y > -(brain->config->fieldDimensions.goalAreaWidth / 4 + brain->config->fieldDimensions.penaltyAreaWidth / 4)) // Quadrante central
         {
             tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
             ty = 0.0;
         }
-        else
+        else // Qualquer outra posição
         {
             tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
             ty = 0.0;
