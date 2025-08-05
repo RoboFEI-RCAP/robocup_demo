@@ -363,9 +363,19 @@ NodeStatus AdjustToAssist::onStart()
         {
             _target_x = brain->data->fieldData.allyData.at(i).pos.x;
             _target_y = brain->data->fieldData.allyData.at(i).pos.y;
+
+            rerun::Collection<rerun::Vec2D> assist_strip = {{brain->data->robotPoseToField.x, brain->data->robotPoseToField.y}, 
+                                                            {_target_x, _target_y}};
+            brain->log->log("field/assist",
+             rerun::LineStrips2D(assist_strip)
+                 .with_colors({0xFFFFFFFF})
+                 .with_radii({0.01})
+                 .with_draw_order(30));
+                 
             return NodeStatus::RUNNING;
         }
     }
+    
     return NodeStatus::SUCCESS;
 }
 
@@ -409,6 +419,8 @@ NodeStatus AdjustToAssist::onRunning()
     vtheta = cap(vtheta, vthetaLimit, -vthetaLimit);
 
     brain->client->setVelocity(vx, vy, vtheta);
+
+
     return NodeStatus::SUCCESS;
 }
 
