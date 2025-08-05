@@ -46,8 +46,12 @@ void BrainTree::init()
     // Action Nodes for debug
     REGISTER_BUILDER(PrintMsg)
 
+    string xmlModels = BT::writeTreeNodesModelXML(factory);
+
     factory.registerBehaviorTreeFromFile(brain->config->treeFilePath);
     tree = factory.createTree("MainTree");
+
+    BT::Groot2Publisher publisher(tree);
 
     // init blackboard entry
     initEntry();

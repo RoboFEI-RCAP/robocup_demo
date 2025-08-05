@@ -2,6 +2,8 @@
 
 #include <behaviortree_cpp/behavior_tree.h>
 #include <behaviortree_cpp/bt_factory.h>
+#include <behaviortree_cpp/loggers/groot2_publisher.h>
+#include <behaviortree_cpp/xml_parsing.h>
 
 #include "types.h"
 
