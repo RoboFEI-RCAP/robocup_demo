@@ -24,6 +24,9 @@ Brain::Brain() : rclcpp::Node("brain_node")
     declare_parameter<double>("robot.yaw_offset", 0.1);
 
     declare_parameter<bool>("rerunLog.enable", false);
+    declare_parameter<bool>("rerunLog.camera_enable", false);
+    declare_parameter<bool>("rerunLog.low_state_enable", false);
+
     declare_parameter<string>("rerunLog.server_addr", "");
     declare_parameter<int>("rerunLog.img_interval", 10);
 
