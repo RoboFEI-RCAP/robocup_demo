@@ -10,9 +10,9 @@ void BrainConfig::handle()
     }
 
     // playerRole [striker, goal_keeper]
-    if (playerRole != "striker" && playerRole != "goal_keeper")
+    if (playerRole != "striker" && playerRole != "goal_keeper" && playerRole != "defender")
     {
-        throw invalid_argument("player_role must be one of [striker, goal_keeper]. Got: " + playerRole);
+        throw invalid_argument("player_role must be one of [striker, goal_keeper, defender]. Got: " + playerRole);
     }
 
     // playerId [0, 1, 2, 3]

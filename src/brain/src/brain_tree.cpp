@@ -29,6 +29,7 @@ void BrainTree::init()
     REGISTER_BUILDER(Adjust)
     REGISTER_BUILDER(Kick)
     REGISTER_BUILDER(StrikerDecide)
+    REGISTER_BUILDER(DefenderDecide)
     REGISTER_BUILDER(CamTrackBall)
     REGISTER_BUILDER(CamFindBall)
     REGISTER_BUILDER(CamScanField)
@@ -42,6 +43,7 @@ void BrainTree::init()
     REGISTER_BUILDER(GoBackInField)
     REGISTER_BUILDER(TurnOnSpot)
     REGISTER_BUILDER(Positioning)
+    REGISTER_BUILDER(Prepare)
 
     // Action Nodes for debug
     REGISTER_BUILDER(PrintMsg)
@@ -85,6 +87,7 @@ void BrainTree::initEntry()
 
     setEntry<double>("goal_start_x", -(brain->config->fieldDimensions.length / 2) + brain->config->fieldDimensions.penaltyAreaLength / 2);
     setEntry<double>("striker_start_x", -(brain->config->fieldDimensions.circleRadius + 0.3));
+    setEntry<double>("defender_start_x", -(brain->config->fieldDimensions.length / 2) + brain->config->fieldDimensions.penaltyDist);
 
 }
 
@@ -318,7 +321,6 @@ NodeStatus Positioning::tick()
     
     double ttheta = 0, longRangeThreshold = 1.5, turnThreshold = 0.4, vxLimit = 1.0, vyLimit = 0.5, vthetaLimit = 0.4, xTolerance = 0.2, yTolerance = 0.2, thetaTolerance = 0.1;
 
-
     start_pos.x = brain->data->ballBuffer[0].posToField.x;
     start_pos.y = brain->data->ballBuffer[0].posToField.y;
     ending_pos.x = brain->data->ballBuffer[2].posToField.x;
@@ -542,7 +544,73 @@ void RotateForRelocate::onHalted()
     brain->tree->setEntry<bool>("should_recalibrate_after_fall_recovery", false);
 }
 
+NodeStatus Prepare::tick()
+{
+    double quad_size = brain->config->fieldDimensions.width / 3.0;
+    double y_ball = brain->data->ball.posToField.y;
 
+    if (y_ball > quad_size / 2.0 || y_ball < -quad_size / 2.0) {
+        // quadrante central
+    }
+    else if (y_ball > quad_size / 2.0) {
+        // quadrante superior
+    }
+    else if (y_ball < -(quad_size / 2.0)) {
+        // quadrante inferior
+    }
+}
+
+NodeStatus DefenderDecide::tick()
+{
+    double chaseRangeThreshold;
+    getInput("chase_threshold", chaseRangeThreshold);
+    string lastDecision, position;
+    getInput("decision_in", lastDecision);
+    getInput("position", position);
+
+    double kickDir = (position == "defense") ? atan2(brain->data->ball.posToField.y, brain->data->ball.posToField.x + brain->config->fieldDimensions.length / 2) : atan2(-brain->data->ball.posToField.y, brain->config->fieldDimensions.length / 2 - brain->data->ball.posToField.x);
+    double dir_rb_f = brain->data->robotBallAngleToField;
+    auto goalPostAngles = brain->getGoalPostAngles(0.3);
+    double theta_l = goalPostAngles[0];
+    double theta_r = goalPostAngles[1];
+    bool angleIsGood = (theta_l > dir_rb_f && theta_r < dir_rb_f);
+    double ballRange = brain->data->ball.range;
+    double ballYaw = brain->data->ball.yawToRobot;
+
+    string newDecision;
+    auto color = 0xFFFFFFFF; // for log
+    if (!brain->tree->getEntry<bool>("ball_location_known"))
+    {
+        newDecision = "find";
+        color = 0x0000FFFF;
+    } 
+    else if (brain->data->ball.posToField.x < 0) 
+    {
+        newDecision = "prepare";
+        color = 0xFF00FFFF;        
+    }
+    else if (ballRange > chaseRangeThreshold * (lastDecision == "chase" ? 0.9 : 1.0))
+    {
+        newDecision = "chase";
+        color = 0x00FF00FF;
+    }
+    else if (angleIsGood)
+    {
+        newDecision = "kick";
+        color = 0xFF0000FF;
+    }
+    else
+    {
+        newDecision = "adjust";
+        color = 0x00FFFFFF;
+    }
+
+    setOutput("decision_out", newDecision);
+    brain->log->logToScreen("tree/Decide",
+                            format("Decision: %s ballrange: %.2f ballyaw: %.2f kickDir: %.2f rbDir: %.2f angleIsGood: %d", newDecision.c_str(), ballRange, ballYaw, kickDir, dir_rb_f, angleIsGood),
+                            color);
+    return NodeStatus::SUCCESS;
+}
 
 NodeStatus GoalieDecide::tick()
 {
