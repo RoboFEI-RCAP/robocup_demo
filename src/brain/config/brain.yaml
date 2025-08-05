@@ -17,5 +17,7 @@ brain_node:
 
     rerunLog:
       enable: true
+      camera_enable: false
+      low_state_enable: false
       server_addr: "192.168.3.174:9876"
       img_interval: 100
