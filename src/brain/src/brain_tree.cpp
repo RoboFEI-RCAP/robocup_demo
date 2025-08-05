@@ -395,7 +395,7 @@ NodeStatus StrikerDecide::tick()
 
     setOutput("decision_out", newDecision);
     brain->log->logToScreen("tree/Decide",
-                            format("Decision: %s ballrange: %.2f ballyaw: %.2f kickDir: %.2f rbDir: %.2f angleIsGood: %d", newDecision.c_str(), ballRange, ballYaw, kickDir, dir_rb_f, angleIsGood),
+                            format("Decision: %s ballrange: %.2f ballyaw: %.2f kickDir: %.2f rbDir: %.2f angleIsGood: %d gameState: %s", newDecision.c_str(), ballRange, ballYaw, kickDir, dir_rb_f, angleIsGood, brain->data->gameState),
                             color);
     return NodeStatus::SUCCESS;
 }

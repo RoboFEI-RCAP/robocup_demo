@@ -397,6 +397,7 @@ void Brain::gameControlCallback(const game_controller_interface::msg::GameContro
         "END"      // The game is over.
     };
     string gameState = gameStateMap[static_cast<int>(msg.state)];
+    data->gameState = gameState;
     tree->setEntry<string>("gc_game_state", gameState);
     bool isKickOffSide = (msg.kick_off_team == config->teamId);
     tree->setEntry<bool>("gc_is_kickoff_side", isKickOffSide);
