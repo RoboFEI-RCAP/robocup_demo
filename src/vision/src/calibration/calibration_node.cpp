@@ -158,7 +158,7 @@ void CalibrationNode::Init(const std::string cfg_path, bool is_offline, std::str
 
 void CalibrationNode::RunExtrinsicCalibrationProcess(const SyncedDataBlock &data_block) {
     if (!is_offline_ && new_log_path_) {
-        log_path_ = std::string(std::getenv("HOME")) + "/Workspace/calibration_log/handeye/" + getTimeString();
+        log_path_ = std::string(std::getenv("HOME")) + "/Pictures/Workspace/calibration_log/handeye/" + getTimeString();
         new_log_path_ = false;
     }
     auto img = data_block.color_data.data;
