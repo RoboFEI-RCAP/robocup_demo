@@ -1,10 +1,12 @@
 #pragma once
+#include <cmath>
 #include <string>
 #include <vector>
 #include <numeric>
 #include <iterator>
 #include <limits>
 #include <rclcpp/rclcpp.hpp>
+#include <math.h>
 
 using namespace std;
 
@@ -50,7 +52,57 @@ struct Point2D
 {
     double x;
     double y;
+
+    Point2D operator+(const Point2D &other) const {
+        return {x + other.x, y + other.y};
+    }
+
+    Point2D operator-(const Point2D &other) const {
+        return {x - other.x, y - other.y};
+    }
+    
+    Point2D operator/(const double &value)
+    {
+        x /= value;
+        y /= value;
+        return {x, y};
+    }
+
+    Point2D operator*(const double &value)
+    {
+        x *= value;
+        y *= value;
+        return {x, y};
+    }
+
+    Point2D rotateAround(const Point2D &value, double angle) const
+    {
+        Point2D aux;
+        aux.x = x;
+        aux.y = y;
+
+        aux = aux - value;
+
+        // rotate
+        angle = angle * M_PI / 180.0;
+        aux.x = aux.x * cos(angle) - aux.y * sin(angle);
+        aux.y = aux.x * sin(angle) + aux.y * cos(angle);
+
+        return aux + value;
+    }
+
+    double norm() const
+    {
+        return sqrt(x*x + y*y);
+    }
+
+    double distanceToPoint(const Point2D &value) const 
+    {
+        return sqrt((x - value.x) * (x - value.x) +
+                    (y - value.y) * (y - value.y));
+    }
 };
+
 
 // BoundingBox
 struct BoundingBox

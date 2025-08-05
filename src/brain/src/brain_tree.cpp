@@ -241,25 +241,61 @@ NodeStatus Chase::tick()
     double ballYaw = brain->data->ball.yawToRobot;
 
     Pose2D target_f, target_r;
-    if (brain->data->robotPoseToField.x - brain->data->ball.posToField.x > (_state == "chase" ? 1.0 : 0.0))
+    Point2D target_pass, ball_pos, target_pos, robot_pos;
+
+    target_pass.x = 0;
+    target_pass.y = brain->config->fieldDimensions.width / 2.0;
+
+    ball_pos.x = brain->data->ball.posToField.x;
+    ball_pos.y = brain->data->ball.posToField.y;
+
+    robot_pos.x = brain->data->robotPoseToField.x;
+    robot_pos.y = brain->data->robotPoseToField.y;
+
+
+    double robot_dist_ball = robot_pos.distanceToPoint(ball_pos),
+           robot_dist_target = robot_pos.distanceToPoint(target_pos);
+
+    target_pos = ((target_pass - ball_pos) / (target_pass - ball_pos).norm())*-1.0 * dist + ball_pos;
+
+    if (robot_dist_ball > dist)
     {
-        _state = "circle_back";
-
-        target_f.x = brain->data->ball.posToField.x - dist;
-
-        if (brain->data->robotPoseToField.y > brain->data->ball.posToField.y - _dir)
-            _dir = 1.0;
-        else
-            _dir = -1.0;
-
-        target_f.y = brain->data->ball.posToField.y + _dir * dist;
+        target_f.x = target_pos.x;
+        target_f.y = target_pos.y;
     }
-    else
-    { // chase
-        _state = "chase";
-        target_f.x = brain->data->ball.posToField.x - dist;
-        target_f.y = brain->data->ball.posToField.y;
+    else if (robot_dist_target > 0.1)
+    {
+        // rotate
+        int dir_rot = 1;
+        target_pos = robot_pos.rotateAround(ball_pos, dir_rot * 30.0);
+
+        target_f.x = target_pos.x;
+        target_f.y = target_pos.y;
     }
+    else // Chegou no target
+    {
+        return NodeStatus::SUCCESS;
+    }
+
+    // if (brain->data->robotPoseToField.x - brain->data->ball.posToField.x > (_state == "chase" ? 1.0 : 0.0))
+    // {
+    //     _state = "circle_back";
+    //
+    //     target_f.x = brain->data->ball.posToField.x - dist;
+    //
+    //     if (brain->data->robotPoseToField.y > brain->data->ball.posToField.y - _dir)
+    //         _dir = 1.0;
+    //     else
+    //         _dir = -1.0;
+    //
+    //     target_f.y = brain->data->ball.posToField.y + _dir * dist;
+    // }
+    // else
+    // { // chase
+    //     _state = "chase";
+    //     target_f.x = brain->data->ball.posToField.x - dist;
+    //     target_f.y = brain->data->ball.posToField.y;
+    // }
 
     target_r = brain->data->field2robot(target_f);
 
@@ -276,7 +312,7 @@ NodeStatus Chase::tick()
     vtheta = cap(vtheta, vthetaLimit, -vthetaLimit);
 
     brain->client->setVelocity(vx, vy, vtheta, false, false, false);
-    return NodeStatus::SUCCESS;
+    return NodeStatus::RUNNING;
 }
 
 NodeStatus SimpleChase::tick()
@@ -360,13 +396,15 @@ NodeStatus Adjust::tick()
 NodeStatus AdjustToAssist::onStart()
 {
     double robot_id;
-    getInput("robot_id", robot_id);
-    for(int i = 0; i < brain->data->fieldData.allyData.size(); i++)
-    {
-        if(brain->data->fieldData.allyData.at(i).playerId == robot_id)
-        {
-            _target_x = brain->data->fieldData.allyData.at(i).pos.x;
-            _target_y = brain->data->fieldData.allyData.at(i).pos.y;
+    getInput("target_id", robot_id);
+    // for(int i = 0; i < brain->data->fieldData.allyData.size(); i++)
+    // {
+    //     if(brain->data->fieldData.allyData.at(i).playerId == robot_id)
+    //     {
+            // _target_x = brain->data->fieldData.allyData.at(i).pos.x;
+            // _target_y = brain->data->fieldData.allyData.at(i).pos.y;
+            _target_x = 0.0;
+            _target_y = brain->config->fieldDimensions.width / 2.0;
 
             rerun::Collection<rerun::Vec2D> assist_strip = {{brain->data->robotPoseToField.x, brain->data->robotPoseToField.y}, 
                                                             {_target_x, _target_y}};
@@ -377,8 +415,8 @@ NodeStatus AdjustToAssist::onStart()
                  .with_draw_order(30));
                  
             return NodeStatus::RUNNING;
-        }
-    }
+    //     }
+    // }
     
     return NodeStatus::SUCCESS;
 }
@@ -397,8 +435,6 @@ NodeStatus AdjustToAssist::onRunning()
     getInput("vtheta_limit", vthetaLimit);
     getInput("max_range", maxRange);
     getInput("min_range", minRange);
-    string position;
-    getInput("position", position);
 
     double vx = 0, vy = 0, vtheta = 0;
     double kickDir = atan2(_target_y - brain->data->ball.posToField.y, _target_x - brain->data->ball.posToField.x);
