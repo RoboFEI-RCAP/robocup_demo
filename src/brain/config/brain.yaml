@@ -3,7 +3,7 @@ brain_node:
     game:
       team_id: 66 # consistant with GameControl
       player_id: 1 # 0 | 1 | 2 | 3
-      field_type: "kid_size" # adult_size | kid_size 
+      field_type: "adult_size" # adult_size | kid_size 
       player_role: "goal_keeper" # striker | goal_keeper
       player_start_pos: "left" # right | left
       
