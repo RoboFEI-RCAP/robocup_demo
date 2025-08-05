@@ -46,6 +46,8 @@ public:
     bool enterDampingPerformed = false;
     bool needManualRelocate = false;
 
+    string gameState;
+
     // Other objects on the field
     vector<GameObject> opponents = {}; // Records information about opponent players, including position, bounding box, etc.
     vector<GameObject> goalposts = {}; // Records information about goalposts, including position, bounding box, etc.

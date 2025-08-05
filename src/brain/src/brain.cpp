@@ -24,6 +24,9 @@ Brain::Brain() : rclcpp::Node("brain_node")
     declare_parameter<double>("robot.yaw_offset", 0.1);
 
     declare_parameter<bool>("rerunLog.enable", false);
+    declare_parameter<bool>("rerunLog.camera_enable", false);
+    declare_parameter<bool>("rerunLog.low_state_enable", false);
+
     declare_parameter<string>("rerunLog.server_addr", "");
     declare_parameter<int>("rerunLog.img_interval", 10);
 
@@ -394,6 +397,7 @@ void Brain::gameControlCallback(const game_controller_interface::msg::GameContro
         "END"      // The game is over.
     };
     string gameState = gameStateMap[static_cast<int>(msg.state)];
+    data->gameState = gameState;
     tree->setEntry<string>("gc_game_state", gameState);
     bool isKickOffSide = (msg.kick_off_team == config->teamId);
     tree->setEntry<bool>("gc_is_kickoff_side", isKickOffSide);
@@ -780,7 +784,7 @@ void Brain::detectProcessBalls(const vector<GameObject> &ballObjs)
             continue;
 
         // Prevent the lights in the sky from being recognized as balls.
-        if (ballObj.posToRobot.x < -0.5 || ballObj.posToRobot.x > 10.0)
+        if (ballObj.posToRobot.x < -0.5 || ballObj.posToRobot.x > 20.0)
             continue;
 
         // Find the one with the highest confidence among the remaining balls.

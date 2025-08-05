@@ -1,23 +1,44 @@
 show_res: false
 camera:
-  type: "realsense" # realsense or zed
+  type: realsense
   intrin:
-    fx: 643.898
-    fy: 643.216
-    cx: 649.038
-    cy: 357.21
-    distortion_coeffs: [-0.0553056,0.065975,-0.000994232,2.98548e-05,-0.0216579]
-    distortion_model: 2 # 0: none, 1: opencv format, 2: for rs d455 only
+    fx: 646.500549
+    fy: 645.68811
+    cx: 638.219543
+    cy: 363.733368
+    distortion_model: 1
+    distortion_coeffs:
+      - -0.0549505763
+      - 0.0630365685
+      - -0.000370048248
+      - 0.00107782567
+      - -0.0203958079
   extrin:
-    - [ 0.05659255, 0.03014561, 0.99794215, 0.04217854]
-    - [-0.99839673, 0.00283376, 0.05653273, 0.01405556]
-    - [-0.00112372,-0.9995415 , 0.03025765,-0.01538294]
-    - [ 0.        , 0.        , 0.        , 1.        ]
-  pitch_compensation: 0.0 # in degree
-  yaw_compensation: 0.0
-  z_compensation: 0.0
+    -
+      - 0.0330558755
+      - -0.0271556601
+      - 0.999084532
+      - 0.0154206427
+    -
+      - -0.999186873
+      - -0.0239856094
+      - 0.032407321
+      - 0.0684711933
+    -
+      - 0.0230836086
+      - -0.999343455
+      - -0.0279264469
+      - -0.0958876163
+    -
+      - 0
+      - 0
+      - 0
+      - 1
+  pitch_compensation: 0
+  yaw_compensation: 0
+  z_compensation: 0
 detection_model:
-  model_path: "./src/vision/model/best_orin_10.3.engine"  # switch to  "./src/vision/model/best_orin_10.3.engine" if u on jetpack 6.2
+  model_path: ./src/vision/model/best_orin_10.3.engine
   confidence_threshold: 0.2
 use_depth: true
 ball_pose_estimator:
@@ -31,4 +52,7 @@ human_like_pose_estimator:
   down_sample_leaf_size: 0.01
   fitting_distance_threshold: 0.01
   statistic_outlier_multiplier: 0.01
-  
+calibration:
+  handeye:
+    calibration_time: 2025-08-05-11-48-05
+    reprojection_error: 5.1759667826495521

@@ -1,11 +1,11 @@
 brain_node:
   ros__parameters:
     game:
-      team_id: 83 # consistant with GameControl
+      team_id: 66 # consistant with GameControl
       player_id: 1 # 0 | 1 | 2 | 3
-      field_type: "adult_size" # adult_size | kid_size 
+      field_type: "kid_size" # adult_size | kid_size 
       player_role: "goal_keeper" # striker | goal_keeper
-      player_start_pos: "right" # right | left
+      player_start_pos: "left" # right | left
       
     robot:
       robot_height: 1.0
@@ -17,7 +17,7 @@ brain_node:
 
     rerunLog:
       enable: true
-      camera_enable: false
+      camera_enable: true
       low_state_enable: false
-      server_addr: "192.168.3.174:9876"
+      server_addr: "192.168.10.10:9876"
       img_interval: 100
