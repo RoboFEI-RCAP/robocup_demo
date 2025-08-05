@@ -784,7 +784,7 @@ void Brain::detectProcessBalls(const vector<GameObject> &ballObjs)
             continue;
 
         // Prevent the lights in the sky from being recognized as balls.
-        if (ballObj.posToRobot.x < -0.5 || ballObj.posToRobot.x > 10.0)
+        if (ballObj.posToRobot.x < -0.5 || ballObj.posToRobot.x > 20.0)
             continue;
 
         // Find the one with the highest confidence among the remaining balls.
