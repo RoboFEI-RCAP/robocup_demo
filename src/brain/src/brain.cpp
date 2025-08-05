@@ -87,6 +87,8 @@ void Brain::loadConfig()
     get_parameter("robot.yaw_offset", config->yawOffset);
 
     get_parameter("rerunLog.enable", config->rerunLogEnable);
+    get_parameter("rerunLog.camera_enable", config->rerunLogCameraEnable);
+    get_parameter("rerunLog.low_state_enable", config->rerunLogLowStateEnable);
     get_parameter("rerunLog.server_addr", config->rerunLogServerAddr);
     get_parameter("rerunLog.img_interval", config->rerunLogImgInterval);
 
@@ -133,8 +135,61 @@ void Brain::updateMemory()
     }
 }
 
+void Brain::mergeBallInfo()
+{
+    // brain->data->mergedBall;
+    double sumX = 0, sumY = 0, avgX = 0, avgY = 0, sumWeights = 0, weight;
+    int nBalls = 0;
+
+    for (int n = 0; n < data->fieldData.allyBallData.size(); n++) 
+    {
+        if (data->fieldData.allyBallData.at(n).detected && data->fieldData.allyBallData.at(n).playerId != -1)
+        {
+            weight = data->fieldData.allyBallData.at(n).confidence / (data->fieldData.allyBallData.at(n).range + data->fieldData.allyBallData.at(n).range);
+            sumX += data->fieldData.allyBallData.at(n).fieldPos.x * weight;
+            sumY += data->fieldData.allyBallData.at(n).fieldPos.y * weight;
+            sumWeights += weight;
+
+            avgX += data->fieldData.allyBallData.at(n).fieldPos.x;
+            avgY += data->fieldData.allyBallData.at(n).fieldPos.y;
+            nBalls++;
+        }
+    }
+
+    avgX /= nBalls;
+    avgY /= nBalls;
+
+    log->log("field/avgball",
+             rerun::LineStrips2D({
+                                     rerun::Collection<rerun::Vec2D>{{avgX - 0.2, -avgY},
+                                                                     {avgX + 0.2, -avgY}},
+                                     rerun::Collection<rerun::Vec2D>{{avgX, -avgY - 0.2},
+                                                                     {avgX, -avgY + 0.2}},
+                                 }) .with_colors({0x43088BFF})
+                                    .with_radii({0.05})
+                                    .with_draw_order(50));
+    // Fusão ponderada
+    if (sumWeights > 0)
+    {
+        avgX = sumX / sumWeights;
+        avgY = sumX / sumWeights;
+    }
+    log->log("field/fuseball",
+             rerun::LineStrips2D({
+                                     rerun::Collection<rerun::Vec2D>{{avgX - 0.2, -avgY},
+                                                                     {avgX + 0.2, -avgY}},
+                                     rerun::Collection<rerun::Vec2D>{{avgX, -avgY - 0.2},
+                                                                     {avgX, -avgY + 0.2}},
+                                 }) .with_colors({0x2F0AFBFF})
+                                    .with_radii({0.05})
+                                    .with_draw_order(50));
+
+}
+
 void Brain::updateBallMemory()
 {
+    mergeBallInfo();
+
     // update Pose to field from Pose to robot (based on odom)
     double xfr, yfr, thetafr; // fr = field to robot
     yfr = sin(data->robotPoseToField.theta) * data->robotPoseToField.x - cos(data->robotPoseToField.theta) * data->robotPoseToField.y;
@@ -180,7 +235,8 @@ void Brain::updateBallMemory()
     {
         for(int i = 0; i < data->fieldData.allyBallData.size(); i++)
         {
-            if (data->fieldData.allyBallData.at(i).detected)
+            if (data->fieldData.allyBallData.at(i).detected && 
+                    data->fieldData.allyBallData.at(i).confidence > 0.7)
             {
                 Pose2D pos = data->fieldData.allyBallData.at(i).fieldPos;
                 log->log(
@@ -517,12 +573,15 @@ void Brain::odometerCallback(const booster_interface::msg::Odometer &msg)
     {
         for(int i = 0; i < data->fieldData.allyData.size(); i++)
         {
-          log->log(
-              robotName + to_string(data->fieldData.allyData.at(i).playerId),
-              rerun::Points2D({ {data->fieldData.allyData.at(i).pos.x,
-                                -data->fieldData.allyData.at(i).pos.y} })
-                  .with_radii({0.3})
-                  .with_colors({robotColor}));
+            if (data->fieldData.allyData.at(i).playerId != -1)
+            {
+                log->log(
+                    robotName + to_string(data->fieldData.allyData.at(i).playerId),
+                    rerun::Points2D({ {data->fieldData.allyData.at(i).pos.x,
+                                        -data->fieldData.allyData.at(i).pos.y} })
+                        .with_radii({0.3})
+                        .with_colors({robotColor}));
+            }
         }
 
         for(int i = 0; i < data->fieldData.opponentData.size(); i++)
@@ -545,6 +604,9 @@ void Brain::lowStateCallback(const booster_interface::msg::LowState &msg)
     data->headYaw = msg.motor_state_serial[0].q;
     data->headPitch = msg.motor_state_serial[1].q;
 
+    if (!config->rerunLogLowStateEnable)
+        return;
+
     log->setTimeNow();
 
     log->log("low_state_callback/imu/rpy/roll", rerun::Scalar(msg.imu_state.rpy[0]));
@@ -561,6 +623,8 @@ void Brain::lowStateCallback(const booster_interface::msg::LowState &msg)
 void Brain::imageCallback(const sensor_msgs::msg::Image &msg)
 {
     if (!config->rerunLogEnable)
+        return;
+    if (!config->rerunLogCameraEnable)
         return;
 
     static int counter = 0;

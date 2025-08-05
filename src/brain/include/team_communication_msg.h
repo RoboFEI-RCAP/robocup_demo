@@ -14,6 +14,7 @@ struct BallInfo {
     int playerId;
     float range;
     Pose2D fieldPos;
+    double confidence;
 };
 
 struct StrategyData {
