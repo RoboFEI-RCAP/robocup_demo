@@ -10,11 +10,11 @@
                  _autoremap="true"/>
         <SetVelocity/>
       </ReactiveSequence>
+      <Delay delay_msec="10000">
+        <SelfLocate mode="trust_direction"/>
+      </Delay>
       <ReactiveSequence name="start"
                         _while="gamecontroller_isKickOffExecuted">
-        <Delay delay_msec="10000">
-          <SelfLocate mode="trust_direction"/>
-        </Delay>
         <SubTree ID="CamFindAndTrackBall"
                  _autoremap="true"/>
         <Sequence>
