@@ -324,6 +324,8 @@ NodeStatus Positioning::tick()
 
     float deltaPosThreshold = 0.5;
 
+    auto color = 0xFFFFFFFF;
+
     if (brain->data->ballBuffer.size() != 10){
         return NodeStatus::FAILURE;
     }
@@ -367,6 +369,8 @@ NodeStatus Positioning::tick()
             tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
             ty = brain->config->fieldDimensions.goalWidth / 2 + offsetGoalie;
         }
+
+        color = 0xFF00FFFF;      
     } else {
         // Bola parada
         double a = (goal_y - start_pos.y) / (goal_x - start_pos.x);
@@ -411,14 +415,15 @@ NodeStatus Positioning::tick()
             ty = 0.0;
         }
 
-        brain->client->moveToPoseOnField(tx, ty, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
+        color = 0x00FFFFFF;
+    }
+    brain->client->moveToPoseOnField(tx, ty, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
         brain->log->log("field/expected_position"),
         rerun::Points2D({ {tx,
                     -ty} })
-        .with_radii({0.3})
-        .with_colors({0xFF00FF00});
-        return NodeStatus::SUCCESS;
-    }
+        .with_radii({0.1})
+        .with_colors({color});
+    return NodeStatus::SUCCESS;
 }
 
 NodeStatus Adjust::tick()
