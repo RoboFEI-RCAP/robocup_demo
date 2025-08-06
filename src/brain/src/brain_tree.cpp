@@ -1,4 +1,5 @@
 #include <cmath>
+#include <string>
 #include "brain_tree.h"
 #include "brain.h"
 #include "utils/math.h"
@@ -257,10 +258,14 @@ NodeStatus Chase::onRunning()
     target_pos = ((target_pass - ball_pos).normalized()) * -dist + ball_pos;
     robot_dist_target = robot_pos.distanceToPoint(target_pos);
 
+    rerun::Color positionColor(0xFF6666FF);
+
     if (robot_dist_ball > dist)
     {
         target_f.x = target_pos.x;
         target_f.y = target_pos.y;
+        brain->log->log("chase",
+                        rerun::TextLog("Go to ball Dist = " + to_string(robot_dist_ball)));
     }
     else if (robot_dist_target > 0.1)
     {
@@ -272,11 +277,16 @@ NodeStatus Chase::onRunning()
 
         target_f.x = target_pos.x;
         target_f.y = target_pos.y;
+
+        positionColor = rerun::Color(0x50FA7BFF);
+        brain->log->log("chase",
+                        rerun::TextLog("Rotate, DistTarget = " + to_string(robot_dist_target)));
     }
     
     if (robot_dist_target > dist * 0.9 && robot_dist_target < dist * 1.1) // Chegou no target
     {
         brain->client->setVelocity(0, 0, 0);
+        brain->log->log("chase", rerun::TextLog("Chase Success"));
         return NodeStatus::SUCCESS;
     }
 
@@ -291,13 +301,11 @@ NodeStatus Chase::onRunning()
 
     brain->log->log("field/robot_target_pos",
              rerun::Points2D(points_r)
-                 .with_colors({0xFF5555FF}));
+                 .with_colors({positionColor}));
 
     brain->log->log("field/pass_lines",
         rerun::LineStrips2D(pass_strip)
-            .with_colors({0x8BE9FDFF})
-            .with_radii({0.05})
-            .with_draw_order(30));
+            .with_colors({0x8BE9FDFF});
 
     target_r = brain->data->field2robot(target_f);
 
@@ -314,6 +322,7 @@ NodeStatus Chase::onRunning()
     vtheta = cap(vtheta, vthetaLimit, -vthetaLimit);
 
     brain->client->setVelocity(vx, vy, vtheta, false, false, false);
+    brain->log->log("chase", rerun::TextLog("Chase running"));
     return NodeStatus::RUNNING;
 }
 
