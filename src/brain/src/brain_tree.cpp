@@ -639,7 +639,7 @@ NodeStatus GoalieDecide::tick()
     
     double field_position = -(brain->config->fieldDimensions.length / 2 + brain->config->fieldDimensions.penaltyAreaLength);
 
-    bool insidePenaltyArea = (brain->data->ball.posToField.x < field_position && brain->data->ball.posToField.x > -brain->config->fieldDimensions.length / 2 && brain->data->ball.posToField.y > -brain->config->fieldDimensions.penaltyAreaWidth / 2 && brain->data->ball.posToField.y < brain->config->fieldDimensions.penaltyAreaWidth / 2)
+    bool insidePenaltyArea = (brain->data->ball.posToField.x < field_position && brain->data->ball.posToField.x > -brain->config->fieldDimensions.length / 2 && brain->data->ball.posToField.y > -brain->config->fieldDimensions.penaltyAreaWidth / 2 && brain->data->ball.posToField.y < brain->config->fieldDimensions.penaltyAreaWidth / 2);
 
     string newDecision;
     auto color = 0xFFFFFFFF; // for log
