@@ -96,6 +96,12 @@ struct Point2D
         return sqrt(x*x + y*y);
     }
 
+    Point2D normalized() const
+    {
+        Point2D aux{x, y};
+        return aux / sqrt(x*x + y*y);
+    }
+
     double distanceToPoint(const Point2D &value) const 
     {
         return sqrt((x - value.x) * (x - value.x) +

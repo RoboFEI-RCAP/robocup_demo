@@ -252,11 +252,10 @@ NodeStatus Chase::tick()
     robot_pos.x = brain->data->robotPoseToField.x;
     robot_pos.y = brain->data->robotPoseToField.y;
 
-
     double robot_dist_ball = robot_pos.distanceToPoint(ball_pos),
            robot_dist_target = robot_pos.distanceToPoint(target_pos);
 
-    target_pos = ((target_pass - ball_pos) / (target_pass - ball_pos).norm())*-1.0 * dist + ball_pos;
+    target_pos = ((target_pass - ball_pos).normalized()) * -dist + ball_pos;
 
     if (robot_dist_ball > dist)
     {
@@ -267,7 +266,9 @@ NodeStatus Chase::tick()
     {
         // rotate
         int dir_rot = 1;
-        target_pos = robot_pos.rotateAround(ball_pos, dir_rot * 30.0);
+        Point2D aux = robot_pos;
+        aux = (aux - ball_pos).normalized() * 2 * dist + ball_pos;
+        target_pos = aux.rotateAround(ball_pos, dir_rot * 20.0);
 
         target_f.x = target_pos.x;
         target_f.y = target_pos.y;
@@ -277,25 +278,24 @@ NodeStatus Chase::tick()
         return NodeStatus::SUCCESS;
     }
 
-    // if (brain->data->robotPoseToField.x - brain->data->ball.posToField.x > (_state == "chase" ? 1.0 : 0.0))
-    // {
-    //     _state = "circle_back";
-    //
-    //     target_f.x = brain->data->ball.posToField.x - dist;
-    //
-    //     if (brain->data->robotPoseToField.y > brain->data->ball.posToField.y - _dir)
-    //         _dir = 1.0;
-    //     else
-    //         _dir = -1.0;
-    //
-    //     target_f.y = brain->data->ball.posToField.y + _dir * dist;
-    // }
-    // else
-    // { // chase
-    //     _state = "chase";
-    //     target_f.x = brain->data->ball.posToField.x - dist;
-    //     target_f.y = brain->data->ball.posToField.y;
-    // }
+    rerun::Collection<rerun::Vec2D> pass_strip = {{target_pass.x, -target_pass.y}, 
+                                                  {ball_pos.x, -ball_pos.y},
+                                                  {robot_pos.x, -robot_pos.y},
+    };
+
+
+    vector<rerun::Vec2D> points_r; // robot frame
+    points_r.push_back(rerun::Vec2D{target_f.x, -target_f.y});
+
+    brain->log->log("field/robot_target_pos",
+             rerun::Points2D(points_r)
+                 .with_colors({0xFF5555FF}));
+
+    brain->log->log("field/pass_lines",
+        rerun::LineStrips2D(pass_strip)
+            .with_colors({0x8BE9FDFF})
+            .with_radii({0.05})
+            .with_draw_order(30));
 
     target_r = brain->data->field2robot(target_f);
 
