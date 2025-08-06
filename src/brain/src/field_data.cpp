@@ -36,5 +36,6 @@ void FieldData::updateFromMsg(TeamCommunicationMsg &_msg) {
 
   allyData.at(_msg.playerId) = ally;
 
-  opponentData.at(_msg.playerId) = _msg.opponentsInfo;
+  // BUG: Fix vector update
+  // opponentData.at(_msg.playerId) = _msg.opponentsInfo;
 }

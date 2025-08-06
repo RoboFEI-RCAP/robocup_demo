@@ -149,10 +149,10 @@ private:
 };
 
 // Chasing the ball: If the ball is behind the robot, it will move around to the back of the ball.
-class Chase : public SyncActionNode
+class Chase : public StatefulActionNode
 {
 public:
-    Chase(const string &name, const NodeConfig &config, Brain *_brain) : SyncActionNode(name, config), brain(_brain) {}
+    Chase(const string &name, const NodeConfig &config, Brain *_brain) : StatefulActionNode(name, config), brain(_brain) {}
 
     static PortsList providedPorts()
     {
@@ -164,7 +164,11 @@ public:
         };
     }
 
-    NodeStatus tick() override;
+    NodeStatus onStart() override;
+
+    NodeStatus onRunning() override;
+
+    void onHalted() override;
 
 private:
     Brain *brain;

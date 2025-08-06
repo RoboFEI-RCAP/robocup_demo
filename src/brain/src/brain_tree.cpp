@@ -224,7 +224,7 @@ NodeStatus CamScanField::tick()
     return NodeStatus::SUCCESS;
 }
 
-NodeStatus Chase::tick()
+NodeStatus Chase::onRunning()
 {
     if (!brain->tree->getEntry<bool>("ball_location_known"))
     {
@@ -275,6 +275,7 @@ NodeStatus Chase::tick()
     }
     else // Chegou no target
     {
+        brain->client->setVelocity(0, 0, 0);
         return NodeStatus::SUCCESS;
     }
 
@@ -313,6 +314,16 @@ NodeStatus Chase::tick()
 
     brain->client->setVelocity(vx, vy, vtheta, false, false, false);
     return NodeStatus::RUNNING;
+}
+
+NodeStatus Chase::onStart()
+{
+    return NodeStatus::RUNNING;
+}
+
+void Chase::onHalted()
+{
+    brain->client->setVelocity(0, 0, 0);
 }
 
 NodeStatus SimpleChase::tick()
