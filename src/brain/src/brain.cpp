@@ -24,6 +24,8 @@ Brain::Brain() : rclcpp::Node("brain_node")
     declare_parameter<double>("robot.yaw_offset", 0.1);
 
     declare_parameter<bool>("rerunLog.enable", false);
+    declare_parameter<bool>("rerunLog.camera_enable", false);
+    declare_parameter<bool>("rerunLog.low_state_enable", false);
     declare_parameter<string>("rerunLog.server_addr", "");
     declare_parameter<int>("rerunLog.img_interval", 10);
 
@@ -507,12 +509,13 @@ void Brain::detectionsCallback(const vision_interface::msg::Detections &msg)
     {
         auto obj = gameObjects[i];
         auto label = obj.label;
+	if (obj.label == "Opponents" || obj.label == "Ball"){
         labels.push_back(rerun::Text(format("%s x:%.2f y:%.2f c:%.2f", obj.label.c_str(), obj.posToRobot.x, obj.posToRobot.y, obj.confidence)));
         points.push_back(rerun::Vec2D{obj.posToField.x, -obj.posToField.y});
         points_r.push_back(rerun::Vec2D{obj.posToRobot.x, -obj.posToRobot.y});
         mins.push_back(rerun::Vec2D{obj.boundingBox.xmin, obj.boundingBox.ymin});
         sizes.push_back(rerun::Vec2D{obj.boundingBox.xmax - obj.boundingBox.xmin, obj.boundingBox.ymax - obj.boundingBox.ymin});
-
+	}
         auto it = detectColorMap.find(label);
         if (it != detectColorMap.end())
         {

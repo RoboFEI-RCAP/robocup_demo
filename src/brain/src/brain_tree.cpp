@@ -316,13 +316,15 @@ NodeStatus Positioning::tick()
 {
     Pose2D start_pos = {}, ending_pos = {};
     
-    double ttheta = 0, longRangeThreshold = 1.5, turnThreshold = 0.4, vxLimit = 1.0, vyLimit = 0.5, vthetaLimit = 0.4, xTolerance = 0.2, yTolerance = 0.2, thetaTolerance = 0.1;
+    double ttheta = 0, longRangeThreshold = 100.0, turnThreshold = 0.4, vxLimit = 1.0, vyLimit = 0.5, vthetaLimit = 0.4, xTolerance = 0.2, yTolerance = 0.2, thetaTolerance = 0.1;
 
     double tx, ty;
 
     float offsetGoalie = 0.3;
 
     float deltaPosThreshold = 0.5;
+
+    auto color = 0xFFFFFFFF;
 
     if (brain->data->ballBuffer.size() != 10){
         return NodeStatus::FAILURE;
@@ -337,8 +339,6 @@ NodeStatus Positioning::tick()
 
     avgBallPos.x /= brain->data->ballBuffer.size();
     avgBallPos.y /= brain->data->ballBuffer.size();
-
-    bool interception;
 
     start_pos.x = brain->data->ballBuffer[0].posToField.x;
     start_pos.y = brain->data->ballBuffer[0].posToField.y;
@@ -367,6 +367,8 @@ NodeStatus Positioning::tick()
             tx = -brain->config->fieldDimensions.length / 2 + offsetGoalie;
             ty = brain->config->fieldDimensions.goalWidth / 2 + offsetGoalie;
         }
+
+        color = 0xFF00FFFF;      
     } else {
         // Bola parada
         double a = (goal_y - start_pos.y) / (goal_x - start_pos.x);
@@ -411,14 +413,15 @@ NodeStatus Positioning::tick()
             ty = 0.0;
         }
 
-        brain->client->moveToPoseOnField(tx, ty, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
-        brain->log->log("field/expected_position"),
+        color = 0x00FFFFFF;
+    }
+    brain->client->moveToPoseOnField(tx, ty, ttheta, longRangeThreshold, turnThreshold, vxLimit, vyLimit, vthetaLimit, xTolerance, yTolerance, thetaTolerance);
+        brain->log->log("field/expected_position",
         rerun::Points2D({ {tx,
                     -ty} })
-        .with_radii({0.3})
-        .with_colors({0xFF00FF00});
-        return NodeStatus::SUCCESS;
-    }
+        .with_radii({0.1})
+        .with_colors({color}));
+    return NodeStatus::SUCCESS;
 }
 
 NodeStatus Adjust::tick()
@@ -643,17 +646,17 @@ NodeStatus GoalieDecide::tick()
         newDecision = "find";
         color = 0x0000FFFF;
     }
-    else if (brain->data->ball.posToField.x > field_position - static_cast<double>(lastDecision == "retreat") && (lastDecision != "positioning"))
-    {
-        newDecision = "retreat";
-        color = 0xFF00FFFF;
-    }
+    // else if (brain->data->ball.posToField.x > field_position - static_cast<double>(lastDecision == "retreat") && (lastDecision != "positioning"))
+    // {
+    //     newDecision = "retreat";
+    //     color = 0xFF00FFFF;
+    // }
     else if (brain->data-> ball.posToField.x > field_position)
     {
         newDecision = "positioning";
         color = 0xFFFF00FF;
     }
-    else if (brain->data->ball.posToField.x < field_position)
+    else if (brain->data->ball.posToField.x < field_position && brain->data->ball.posToField.x > -brain->config->fieldDimensions.length / 2 && brain->data->ball.posToField.y > -brain->config->fieldDimensions.penaltyAreaWidth / 2 && brain->data->ball.posToField.y < brain->config->fieldDimensions.penaltyAreaWidth / 2)
     {
         newDecision = "chase";
         color = 0x00FF00FF;
