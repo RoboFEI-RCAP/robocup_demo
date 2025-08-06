@@ -653,7 +653,7 @@ NodeStatus GoalieDecide::tick()
         newDecision = "positioning";
         color = 0xFFFF00FF;
     }
-    else if (brain->data->ball.posToField.x < field_position)
+    else if (brain->data->ball.posToField.x < field_position && brain->data->ball.posToField.x > -brain->config->fieldDimensions.length / 2 && brain->data->ball.posToField.y > -brain->config->fieldDimensions.penaltyAreaWidth / 2 && brain->data->ball.posToField.y < brain->config->fieldDimensions.penaltyAreaWidth / 2)
     {
         newDecision = "chase";
         color = 0x00FF00FF;
