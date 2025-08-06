@@ -260,16 +260,6 @@ NodeStatus Chase::onRunning()
 
     robot_dist_rotate = rotatePos.distanceToPoint(robot_pos);
 
-    if (robot_dist_rotate < 0.2)
-    {
-        target_f.x = target_pos.x;
-        target_f.y = target_pos.y;
-    }
-    else
-    {
-        return NodeStatus::RUNNING;
-    }
-
     rerun::Color positionColor(0xFF6666FF);
     //     brain->log->log("chase", rerun::TextLog("Chase Success"));
 
@@ -280,11 +270,23 @@ NodeStatus Chase::onRunning()
 
 
     vector<rerun::Vec2D> points_r; // robot frame
-    points_r.push_back(rerun::Vec2D{target_f.x, -target_f.y});
 
-    brain->log->log("field/robot_target_pos",
-             rerun::Points2D(points_r)
-                 .with_colors({positionColor}));
+    if (robot_dist_rotate < 0.2)
+    {
+        target_f.x = target_pos.x;
+        target_f.y = target_pos.y;
+        points_r.push_back(rerun::Vec2D{target_f.x, -target_f.y});
+        positionColor = rerun::Color(0x00FF00FF);
+    }
+    else
+    {
+        points_r.push_back(rerun::Vec2D{rotatePos.x, -rotatePos.y});
+
+        brain->log->log("field/robot_target_pos",
+                rerun::Points2D(points_r)
+                    .with_colors({positionColor}));
+        return NodeStatus::RUNNING;
+    }
     brain->log->log("field/robot_debug_points",
              rerun::Points2D(points_r)
                  .with_colors({positionColor}));
@@ -523,8 +525,17 @@ NodeStatus StrikerDecide::tick()
     double kickDir = (position == "defense") ? atan2(brain->data->ball.posToField.y, brain->data->ball.posToField.x + brain->config->fieldDimensions.length / 2) : atan2(-brain->data->ball.posToField.y, brain->config->fieldDimensions.length / 2 - brain->data->ball.posToField.x);
     double dir_rb_f = brain->data->robotBallAngleToField;
     auto goalPostAngles = brain->getGoalPostAngles(0.3);
-    double theta_l = goalPostAngles[0];
-    double theta_r = goalPostAngles[1];
+
+    double leftX, leftY, rightX, rightY;
+    leftX = -0.3;
+    leftY = brain->config->fieldDimensions.width / 2;
+    rightX = 0.3;
+    rightY = brain->config->fieldDimensions.width / 2;
+    const double theta_l = atan2(leftY - brain->data->ball.posToField.y, leftX - brain->data->ball.posToField.x);
+    const double theta_r = atan2(rightY + brain->data->ball.posToField.y, rightX - brain->data->ball.posToField.x);
+
+    // double theta_l = goalPostAngles[0];
+    // double theta_r = goalPostAngles[1];
     bool angleIsGood = (theta_l > dir_rb_f && theta_r < dir_rb_f);
     double ballRange = brain->data->ball.range;
     double ballYaw = brain->data->ball.yawToRobot;
