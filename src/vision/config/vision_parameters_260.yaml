@@ -1,0 +1,38 @@
+show_res: false
+camera:
+  type: realsense
+  intrin:
+    fx: 645.900146
+    fy: 644.924988
+    cx: 641.014343
+    cy: 377.151855
+    distortion_model: 1
+    distortion_coeffs:
+      - -0.0556925908
+      - 0.0655244887
+      - 0.000303054025
+      - 0.000938325655
+      - -0.0214022379
+  extrin:
+    - [0.05659255, 0.03014561, 0.99794215, 0.04217854]
+    - [-0.99839673, 0.00283376, 0.05653273, 0.01405556]
+    - [-0.00112372, -0.9995415, 0.03025765, -0.01538294]
+    - [0., 0., 0., 1.]
+  pitch_compensation: 0.0
+  yaw_compensation: 0.0
+  z_compensation: 0.0
+detection_model:
+  model_path: ./src/vision/model/best_orin_10.3.engine
+  confidence_threshold: 0.2
+use_depth: true
+ball_pose_estimator:
+  use_depth: false
+  radius: 1.109
+  down_sample_leaf_size: 0.01
+  cluster_distance_threshold: 0.01
+  fitting_distance_threshold: 0.01
+human_like_pose_estimator:
+  use_depth: false
+  down_sample_leaf_size: 0.01
+  fitting_distance_threshold: 0.01
+  statistic_outlier_multiplier: 0.01
