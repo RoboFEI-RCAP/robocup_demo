@@ -16,10 +16,12 @@ def generate_launch_description():
                 {
                     "port": 3838,
 
-                    "enable_ip_white_list": False,
+                    "enable_ip_white_list": True,
 
                     "ip_white_list": [
                         "127.0.0.1",
+                        "192.168.10.10",
+                        "192.168.3.78",
                     ],
                 }
             ]
