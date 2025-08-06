@@ -252,10 +252,10 @@ NodeStatus Chase::onRunning()
     robot_pos.x = brain->data->robotPoseToField.x;
     robot_pos.y = brain->data->robotPoseToField.y;
 
-    double robot_dist_ball = robot_pos.distanceToPoint(ball_pos),
-           robot_dist_target = robot_pos.distanceToPoint(target_pos);
+    double robot_dist_ball = robot_pos.distanceToPoint(ball_pos), robot_dist_target;
 
     target_pos = ((target_pass - ball_pos).normalized()) * -dist + ball_pos;
+    robot_dist_target = robot_pos.distanceToPoint(target_pos);
 
     if (robot_dist_ball > dist)
     {
@@ -273,7 +273,8 @@ NodeStatus Chase::onRunning()
         target_f.x = target_pos.x;
         target_f.y = target_pos.y;
     }
-    else // Chegou no target
+    
+    if (robot_dist_target > dist * 0.9 && robot_dist_target < dist * 1.1) // Chegou no target
     {
         brain->client->setVelocity(0, 0, 0);
         return NodeStatus::SUCCESS;
