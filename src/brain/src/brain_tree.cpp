@@ -639,6 +639,8 @@ NodeStatus GoalieDecide::tick()
     
     double field_position = -(brain->config->fieldDimensions.length / 2 + brain->config->fieldDimensions.penaltyAreaLength);
 
+    bool insidePenaltyArea = (brain->data->ball.posToField.x < field_position && brain->data->ball.posToField.x > -brain->config->fieldDimensions.length / 2 && brain->data->ball.posToField.y > -brain->config->fieldDimensions.penaltyAreaWidth / 2 && brain->data->ball.posToField.y < brain->config->fieldDimensions.penaltyAreaWidth / 2)
+
     string newDecision;
     auto color = 0xFFFFFFFF; // for log
     if (!brain->tree->getEntry<bool>("ball_location_known"))
@@ -650,27 +652,27 @@ NodeStatus GoalieDecide::tick()
     // {
     //     newDecision = "retreat";
     //     color = 0xFF00FFFF;
-    // }
-    else if (brain->data-> ball.posToField.x > field_position)
+    // }    
+    else if (!insidePenaltyArea)
     {
         newDecision = "positioning";
         color = 0xFFFF00FF;
     }
-    else if (brain->data->ball.posToField.x < field_position && brain->data->ball.posToField.x > -brain->config->fieldDimensions.length / 2 && brain->data->ball.posToField.y > -brain->config->fieldDimensions.penaltyAreaWidth / 2 && brain->data->ball.posToField.y < brain->config->fieldDimensions.penaltyAreaWidth / 2)
+    else if (insidePenaltyArea)
     {
         newDecision = "chase";
         color = 0x00FF00FF;
     }
-    else if (angleIsGood)
-    {
-        newDecision = "kick";
-        color = 0xFF0000FF;
-    }
-    else
-    {
-        newDecision = "adjust";
-        color = 0x00FFFFFF;
-    }
+    // else if (angleIsGood)
+    // {
+    //     newDecision = "kick";
+    //     color = 0xFF0000FF;
+    // }
+    // else
+    // {
+    //     newDecision = "adjust";
+    //     color = 0x00FFFFFF;
+    // }
 
     setOutput("decision_out", newDecision);
     brain->log->logToScreen("tree/Decide",
