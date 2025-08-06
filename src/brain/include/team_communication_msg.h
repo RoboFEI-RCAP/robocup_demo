@@ -9,6 +9,12 @@
 
 using namespace std;
 
+enum PlayTypes {
+    PASS,
+    PASS_TO_GOAL,
+    SHOOT_TO_GOAL
+};
+
 struct BallInfo {
     bool detected;
     int playerId;
@@ -19,6 +25,8 @@ struct BallInfo {
 
 struct StrategyData {
     int strickerId;
+    int receiverId;
+    PlayTypes currentPlay;
     // TODO: Dados da jogada a ser realizada: passe, finalização...
 };
 

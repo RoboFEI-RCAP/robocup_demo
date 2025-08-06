@@ -525,17 +525,8 @@ NodeStatus StrikerDecide::tick()
     double kickDir = (position == "defense") ? atan2(brain->data->ball.posToField.y, brain->data->ball.posToField.x + brain->config->fieldDimensions.length / 2) : atan2(-brain->data->ball.posToField.y, brain->config->fieldDimensions.length / 2 - brain->data->ball.posToField.x);
     double dir_rb_f = brain->data->robotBallAngleToField;
     auto goalPostAngles = brain->getGoalPostAngles(0.3);
-
-    double leftX, leftY, rightX, rightY;
-    leftX = -0.3;
-    leftY = brain->config->fieldDimensions.width / 2;
-    rightX = 0.3;
-    rightY = brain->config->fieldDimensions.width / 2;
-    const double theta_l = atan2(leftY - brain->data->ball.posToField.y, leftX - brain->data->ball.posToField.x);
-    const double theta_r = atan2(rightY + brain->data->ball.posToField.y, rightX - brain->data->ball.posToField.x);
-
-    // double theta_l = goalPostAngles[0];
-    // double theta_r = goalPostAngles[1];
+    double theta_l = goalPostAngles[0];
+    double theta_r = goalPostAngles[1];
     bool angleIsGood = (theta_l > dir_rb_f && theta_r < dir_rb_f);
     double ballRange = brain->data->ball.range;
     double ballYaw = brain->data->ball.yawToRobot;
