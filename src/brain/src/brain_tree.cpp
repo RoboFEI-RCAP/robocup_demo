@@ -637,7 +637,7 @@ NodeStatus GoalieDecide::tick()
     double ballRange = brain->data->ball.range;
     double ballYaw = brain->data->ball.yawToRobot;
     
-    double field_position = -(brain->config->fieldDimensions.length / 2 + brain->config->fieldDimensions.penaltyAreaLength);
+    double field_position = -(brain->config->fieldDimensions.length / 2 - brain->config->fieldDimensions.penaltyAreaLength);
 
     // bool insidePenaltyArea = (brain->data->ball.posToField.x < field_position && brain->data->ball.posToField.x > -brain->config->fieldDimensions.length / 2 && brain->data->ball.posToField.y > -brain->config->fieldDimensions.penaltyAreaWidth / 2 && brain->data->ball.posToField.y < brain->config->fieldDimensions.penaltyAreaWidth / 2);
 
@@ -672,16 +672,16 @@ NodeStatus GoalieDecide::tick()
         newDecision = "chase";
         color = 0x00FF00FF;
     }
-    // else if (angleIsGood)
-    // {
-    //     newDecision = "kick";
-    //     color = 0xFF0000FF;
-    // }
-    // else
-    // {
-    //     newDecision = "adjust";
-    //     color = 0x00FFFFFF;
-    // }
+    else if (angleIsGood)
+    {
+        newDecision = "kick";
+        color = 0xFF0000FF;
+    }
+    else
+    {
+        newDecision = "adjust";
+        color = 0x00FFFFFF;
+    }
 
     setOutput("decision_out", newDecision);
     brain->log->logToScreen("tree/Decide",
