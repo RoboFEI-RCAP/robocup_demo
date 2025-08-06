@@ -76,6 +76,10 @@ struct Point2D
         return {x, y};
     }
 
+    friend Point2D operator*(double value, const Point2D &p) {
+        return {p.x * value, p.y * value};
+    }
+
     Point2D rotateAround(const Point2D &value, double angle) const
     {
         Point2D aux;
@@ -107,6 +111,65 @@ struct Point2D
     {
         return sqrt((x - value.x) * (x - value.x) +
                     (y - value.y) * (y - value.y));
+    }
+
+    bool interceptLine(const Point2D &p1, const Point2D &p2, double threshold) const
+    {
+        Point2D v, u, w, a, p3;
+        p3.x = x;
+        p3.y = y;
+
+        v = p2 - p1;
+        u = p3 - p1;
+        w = u.perpendVector(v);
+
+        double distance = w.norm();
+
+        if (distance <= threshold)
+        {
+            Point2D vt2dP, Pa, Pb, Pc;
+            float fP_PaPb = 0, fPaPb_PaPb = 0, fP_PcPb = 0, fPcPb_PcPb = 0;
+
+            a = w;
+            a = a.normalized(); // A^ = W→/|W→|
+            a = a * threshold;
+
+            Pa = a + p1;
+            Pb = p2 + a;
+            Pc = p2 - a;
+            vt2dP = p3 - Pb;
+
+            fP_PaPb = vt2dP.dotProduct(Pa - Pb);
+            fPaPb_PaPb = (Pa - Pb).dotProduct(Pa - Pb);
+            fP_PcPb = vt2dP.dotProduct(Pc - Pb);
+            fPcPb_PcPb = (Pc - Pb).dotProduct(Pc - Pb);
+
+            if (fP_PaPb >= 0 &&
+                fP_PaPb <= fPaPb_PaPb && // Se 0 < P→ . (Pa-Pb)→ < |Pa-Pb|² E 0 < P→
+                                        // . (Pc-Pb)→ < |Pc-Pb|² o ponto P3 está
+                fP_PcPb >= 0 && fP_PcPb <= fPcPb_PcPb) // dentro do retângulo
+                return true;
+        }
+        return false;
+    }
+
+    Point2D perpendVector(const Point2D &v) const
+    {
+        Point2D u;
+        u.x = x;
+        u.y = y;
+
+        return u - ((u.dotProduct(v) / v.normSquared()) * v); // W→ = u→ - ( ( (u→ . v→)/ |v→|²) * v→)
+    }
+
+    double dotProduct(const Point2D &other) const
+    {
+        return x*other.x + y*other.y;
+    }
+
+    double normSquared() const
+    {
+        return x*x + y*y;
     }
 };
 

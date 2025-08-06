@@ -172,6 +172,7 @@ public:
 
 private:
     Brain *brain;
+    Point2D rotatePos;
     string _state;     // circl_back, chase;
     double _dir = 1.0; // 1.0 circle back from left, -1.0  circle back from right
 };

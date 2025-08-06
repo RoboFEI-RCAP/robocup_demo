@@ -253,47 +253,30 @@ NodeStatus Chase::onRunning()
     robot_pos.x = brain->data->robotPoseToField.x;
     robot_pos.y = brain->data->robotPoseToField.y;
 
-    double robot_dist_ball = robot_pos.distanceToPoint(ball_pos), robot_dist_target;
+    double robot_dist_ball = robot_pos.distanceToPoint(ball_pos), robot_dist_target, robot_dist_rotate;
 
     target_pos = ((target_pass - ball_pos).normalized()) * -dist + ball_pos;
     robot_dist_target = robot_pos.distanceToPoint(target_pos);
 
+    robot_dist_rotate = rotatePos.distanceToPoint(robot_pos);
+
+    if (robot_dist_rotate < 0.2)
+    {
+        target_f.x = target_pos.x;
+        target_f.y = target_pos.y;
+    }
+    else
+    {
+        return NodeStatus::RUNNING;
+    }
+
     rerun::Color positionColor(0xFF6666FF);
+    //     brain->log->log("chase", rerun::TextLog("Chase Success"));
 
-    if (robot_dist_ball > dist)
-    {
-        target_f.x = target_pos.x;
-        target_f.y = target_pos.y;
-        brain->log->log("chase",
-                        rerun::TextLog("Go to ball Dist = " + to_string(robot_dist_ball)));
-    }
-    else if (robot_dist_target > 0.1)
-    {
-        // rotate
-        int dir_rot = 1;
-        Point2D aux = robot_pos;
-        aux = (aux - ball_pos).normalized() * 2 * dist + ball_pos;
-        target_pos = aux.rotateAround(ball_pos, dir_rot * 20.0);
-
-        target_f.x = target_pos.x;
-        target_f.y = target_pos.y;
-
-        positionColor = rerun::Color(0x50FA7BFF);
-        brain->log->log("chase",
-                        rerun::TextLog("Rotate, DistTarget = " + to_string(robot_dist_target)));
-    }
-    
-    if (robot_dist_target > dist * 0.9 && robot_dist_target < dist * 1.1) // Chegou no target
-    {
-        brain->client->setVelocity(0, 0, 0);
-        brain->log->log("chase", rerun::TextLog("Chase Success"));
-        return NodeStatus::SUCCESS;
-    }
-
-    rerun::Collection<rerun::Vec2D> pass_strip = {{target_pass.x, -target_pass.y}, 
-                                                  {ball_pos.x, -ball_pos.y},
-                                                  {robot_pos.x, -robot_pos.y},
-    };
+    rerun::Collection<rerun::Vec2D> target_ball = {{target_pass.x, -target_pass.y}, 
+                                                  {ball_pos.x, -ball_pos.y}};
+    rerun::Collection<rerun::Vec2D> ball_target_p = {{ball_pos.x, -ball_pos.y},
+                                                  {target_pos.x, -target_pos.y}};
 
 
     vector<rerun::Vec2D> points_r; // robot frame
@@ -302,10 +285,15 @@ NodeStatus Chase::onRunning()
     brain->log->log("field/robot_target_pos",
              rerun::Points2D(points_r)
                  .with_colors({positionColor}));
+    brain->log->log("field/robot_debug_points",
+             rerun::Points2D(points_r)
+                 .with_colors({positionColor}));
 
     brain->log->log("field/pass_lines",
-        rerun::LineStrips2D(pass_strip)
-            .with_colors({0x8BE9FDFF});
+        rerun::LineStrips2D({target_ball, ball_target_p})
+            .with_colors({0x8BE9FDFF})
+            .with_radii({0.2})
+            .with_draw_order(100.0));
 
     target_r = brain->data->field2robot(target_f);
 
@@ -321,13 +309,49 @@ NodeStatus Chase::onRunning()
     vy = cap(vy, vyLimit, -vyLimit);
     vtheta = cap(vtheta, vthetaLimit, -vthetaLimit);
 
-    brain->client->setVelocity(vx, vy, vtheta, false, false, false);
+    brain->client->moveToPoseOnField(target_f.x, target_f.y, ballYaw, 1.5, 0.4, 1.0, 0.5, 0.4, 0.2, 0.2, 0.1);
+    // brain->client->setVelocity(vx, vy, vtheta, false, false, false);
     brain->log->log("chase", rerun::TextLog("Chase running"));
-    return NodeStatus::RUNNING;
+    return NodeStatus::SUCCESS;
 }
 
 NodeStatus Chase::onStart()
 {
+    double dist;
+    getInput("dist", dist);
+
+    Point2D target_pass, ball_pos, target_pos, robot_pos;
+    double ballYaw = brain->data->ball.yawToRobot;
+
+    target_pass.x = 0;
+    target_pass.y = brain->config->fieldDimensions.width / 2.0;
+
+    ball_pos.x = brain->data->ball.posToField.x;
+    ball_pos.y = brain->data->ball.posToField.y;
+
+    robot_pos.x = brain->data->robotPoseToField.x;
+    robot_pos.y = brain->data->robotPoseToField.y;
+
+    double robot_dist_ball = robot_pos.distanceToPoint(ball_pos), robot_dist_target;
+
+    target_pos = ((target_pass - ball_pos).normalized()) * -dist + ball_pos;
+    robot_dist_target = robot_pos.distanceToPoint(target_pos);
+
+    if(ball_pos.interceptLine(robot_pos, target_pos, 0.4)) // Contornar
+    {
+        target_pos = (robot_pos - ball_pos).perpendVector(ball_pos - target_pos).normalized() * 0.4;
+        rotatePos = target_pos;
+        brain->client->moveToPoseOnField(target_pos.x, target_pos.y, ballYaw, 1.5,
+                                        0.4, 1.0, 0.5, 0.4, 0.2, 0.2, 0.1);
+    }
+    else // Vai direto
+    {
+      brain->client->moveToPoseOnField(target_pos.x, target_pos.y, ballYaw, 1.5,
+                                       0.4, 1.0, 0.5, 0.4, 0.2, 0.2, 0.1);
+
+      return NodeStatus::SUCCESS;
+    }
+
     return NodeStatus::RUNNING;
 }
 
