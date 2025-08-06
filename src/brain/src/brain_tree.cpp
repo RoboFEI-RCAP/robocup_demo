@@ -340,8 +340,6 @@ NodeStatus Positioning::tick()
     avgBallPos.x /= brain->data->ballBuffer.size();
     avgBallPos.y /= brain->data->ballBuffer.size();
 
-    bool interception;
-
     start_pos.x = brain->data->ballBuffer[0].posToField.x;
     start_pos.y = brain->data->ballBuffer[0].posToField.y;
     ending_pos.x = brain->data->ballBuffer[2].posToField.x;
@@ -648,11 +646,11 @@ NodeStatus GoalieDecide::tick()
         newDecision = "find";
         color = 0x0000FFFF;
     }
-    else if (brain->data->ball.posToField.x > field_position - static_cast<double>(lastDecision == "retreat") && (lastDecision != "positioning"))
-    {
-        newDecision = "retreat";
-        color = 0xFF00FFFF;
-    }
+    // else if (brain->data->ball.posToField.x > field_position - static_cast<double>(lastDecision == "retreat") && (lastDecision != "positioning"))
+    // {
+    //     newDecision = "retreat";
+    //     color = 0xFF00FFFF;
+    // }
     else if (brain->data-> ball.posToField.x > field_position)
     {
         newDecision = "positioning";
