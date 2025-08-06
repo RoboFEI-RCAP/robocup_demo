@@ -597,7 +597,7 @@ NodeStatus RotateForRelocate::onRunning()
     brain->client->setVelocity(0, 0, vyaw_limit);
 
     if (this->_lastSuccessfulLocalizeTime.nanoseconds() != brain->data->lastSuccessfulLocalizeTime.nanoseconds()) {
-        brain->tree->setEntry<bool>("should_recalibrate_after_fall_recovery", false);
+        brain->tree->setEntry<bool>("should_reca librate_after_fall_recovery", false);
         brain->log->log("recovery", rerun::TextLog("Relocated successfully"));
         return NodeStatus::SUCCESS;
     }
@@ -639,7 +639,16 @@ NodeStatus GoalieDecide::tick()
     
     double field_position = -(brain->config->fieldDimensions.length / 2 + brain->config->fieldDimensions.penaltyAreaLength);
 
-    bool insidePenaltyArea = (brain->data->ball.posToField.x < field_position && brain->data->ball.posToField.x > -brain->config->fieldDimensions.length / 2 && brain->data->ball.posToField.y > -brain->config->fieldDimensions.penaltyAreaWidth / 2 && brain->data->ball.posToField.y < brain->config->fieldDimensions.penaltyAreaWidth / 2);
+    // bool insidePenaltyArea = (brain->data->ball.posToField.x < field_position && brain->data->ball.posToField.x > -brain->config->fieldDimensions.length / 2 && brain->data->ball.posToField.y > -brain->config->fieldDimensions.penaltyAreaWidth / 2 && brain->data->ball.posToField.y < brain->config->fieldDimensions.penaltyAreaWidth / 2);
+
+    bool insidePenaltyArea1 = brain->data->ball.posToField.x < field_position;
+    bool insidePenaltyArea2 = brain->data->ball.posToField.x > -brain->config->fieldDimensions.length / 2;
+    bool insidePenaltyArea3 = brain->data->ball.posToField.y > -brain->config->fieldDimensions.penaltyAreaWidth / 2;
+    bool insidePenaltyArea4 = brain->data->ball.posToField.y < brain->config->fieldDimensions.penaltyAreaWidth / 2;
+
+    bool insidePenaltyArea = insidePenaltyArea1 && insidePenaltyArea2 && insidePenaltyArea3 && insidePenaltyArea4;
+
+    brain->log->log("field/chase_debug", rerun::TextLog(format("Flag 1: %d Flag 2: %d Flag 3: %d Flag 4: %d", insidePenaltyArea1, insidePenaltyArea2, insidePenaltyArea3, insidePenaltyArea4)));
 
     string newDecision;
     auto color = 0xFFFFFFFF; // for log
