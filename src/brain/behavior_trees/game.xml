@@ -35,6 +35,7 @@
                             <CamScanField />
                             <MoveToPoseOnField x="{striker_start_x}" _while="player_role == 'striker'" vtheta_limit="2.0"  vx_limit="0.4" />
                             <MoveToPoseOnField x="{goal_start_x}" _while="player_role == 'goal_keeper'" vtheta_limit="2.0"  vx_limit="0.4" />
+                            <MoveToPoseOnField x="{defender_start_x}" _while="player_role == 'defender'" vtheta_limit="2.0"  vx_limit="0.4" />
                             <SelfLocate mode="trust_direction" />
                             <WaveHand _while="we_just_scored" action="start" />
                         </ReactiveSequence>
@@ -48,6 +49,7 @@
                         <ReactiveSequence _while="gc_game_state=='PLAY'" name="play">
                             <SubTree ID="StrikerPlay" _autoremap="true" _while="player_role == 'striker'" />
                             <SubTree ID="GoalKeeperPlay" _autoremap="true" _while="player_role == 'goal_keeper'" />
+                            <SubTree ID="DefenderPlay" _autoremap="true" _while="player_role == 'defender'" />
                         </ReactiveSequence>
 
                         <ReactiveSequence _while="gc_game_state=='END'" name="end">
@@ -64,6 +66,7 @@
                         <ReactiveSequence _while="gc_game_sub_state=='GET_READY'">
                             <SubTree ID="StrikerFreekick" _autoremap="true" _while="player_role == 'striker'" />
                             <SubTree ID="GoalKeeperFreekick" _autoremap="true" _while="player_role == 'goal_keeper'"/>
+                            <SubTree ID="DefenderFreeKick" _autoremap="true" _while="player_role == 'defender'" />
                         </ReactiveSequence>
                         <ReactiveSequence _while="gc_game_sub_state=='SET'">
                             <SubTree ID="CamFindAndTrackBall" _autoremap="true" />

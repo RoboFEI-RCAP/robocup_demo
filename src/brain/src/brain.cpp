@@ -53,6 +53,7 @@ void Brain::init()
     
     tree->setEntry<double>("goal_start_x", -(config->fieldDimensions.length / 2) + config->fieldDimensions.penaltyAreaLength/2);
     tree->setEntry<double>("striker_start_x", -(config->fieldDimensions.circleRadius + 0.3));
+    tree->setEntry<double>("defender_start_x", -(config->fieldDimensions.length / 2) + config->fieldDimensions.penaltyDist);
 
     client->init();
 
